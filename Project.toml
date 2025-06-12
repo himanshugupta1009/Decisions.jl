@@ -1,0 +1,4 @@
+name = "Decisions"
+uuid = "56ec2819-4cf1-4b71-8671-a6d58a3a5abb"
+authors = ["Mel Krusniak <mel.krusniak@vanderbilt.edu>", "Jackson Wagner <jackson.wagner-1@colorado.edu>", "Kyle Wray <k.wray@northeastern.edu>", "Zachary Sunberg <zachary.sunberg@colorado.edu>", "Tyler Becker <tyler.becker-1@colorado.edu>"]
+version = "0.1.0"
