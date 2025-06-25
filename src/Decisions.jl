@@ -3,6 +3,7 @@ module Decisions
 include("framework/networks.jl")
 export MarkovProblem
 export structure
+export sample
 
 include("framework/conditional_dists.jl")
 export ConditionalDist
@@ -41,9 +42,17 @@ export Centralization
 export Centralized
 export Decentralized
 
+include("framework/transformations.jl")
+export ToTrait
+export transform
 
 include("problems/markov/Markov.jl")
 export MarkovProblem
 export POMDP
+export @def_markov
+
+
+const NewVal{T} = Val{T}
+export NewVal
 
 end # module Decisions

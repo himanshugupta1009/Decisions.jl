@@ -1,12 +1,21 @@
 
+@testset "Variants are in the Markov family" begin
+    T = (s, a) -> s + a
+    Z = (s) -> s + rand()
+    R = (s) -> s
 
-@testset "Dispatch a POMDP based on reward conditioning" begin
+    pomdp = POMDP(T, Z, R)
+
+    @test pomdp isa MarkovProblem
+end
+
+@testset "Disambiguate based on reward conditioning" begin
     uses_sas(m::POMDP{MemoryPresent, SConditioned}) = false
     uses_sas(m::POMDP{MemoryPresent, SAConditioned}) = false
     uses_sas(m::POMDP{MemoryPresent, SASConditioned}) = true
 
     T = (s, a) -> s + a
-    Z = (s, a) -> s + rand()
+    Z = (s) -> s + rand()
     R_s = (s) -> s
     R_sa = (s, a) -> s
     R_sas = (s, a, sp) -> s
@@ -18,3 +27,5 @@
     @test ! uses_sas(p_sa)
     @test uses_sas(p_sas)
 end
+
+# @testset "Disambiguate a problem "

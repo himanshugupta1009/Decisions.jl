@@ -116,3 +116,91 @@ Not all nodes need to have a behavior provided through through `behavior`.
 Those that do not are assumed to be decision nodes.
 """
 function behavior(::DecisionProblem, idx) end
+
+struct DNOut{ids} end
+DNOut(name::Symbol) = DNOut{name}()
+DNOut(names...) = DNOut{names}()
+DNOut(names::Tuple) = DNOut{names}()
+
+@generated function sample(
+    problem::DecisionProblem,
+    decisions,
+    in::NamedTuple{ids_in},
+    _::DNOut{ids_out}) where {ids_out, ids_in}
+
+    dn = structure(problem)
+
+    # TODO: Variables automatically named for their DN nodes can conflict with other names
+
+    expr = quote 
+        node_defs = merge(behavior(problem), decisions) 
+    end
+
+    for id in ids_in
+        sym = Expr(:quote, id)
+        block = quote
+            $id = in[$sym]
+        end
+        append!(expr.args, block.args)
+    end
+
+    nodes_in_order = _crawl_graph(dn, ids_in, ids_out)
+    println([(q, _order(dn, q)) for q in nodes_in_order])
+
+    for id in nodes_in_order
+        sym = Expr(:quote, id)
+        cond_vars = dn[id]
+        block = quote
+            $id = node_defs[$sym]($(cond_vars...))
+        end
+        append!(expr.args, block.args)
+    end
+
+    return_block = quote
+        return NamedTuple{$ids_out}($(ids_out...))
+    end
+    append!(expr.args, return_block.args)
+
+    println(expr)
+    return expr
+end
+
+function sample(prob::DecisionProblem, decisions::NamedTuple, in::NamedTuple, out::Tuple)
+    sample(prob, decisions, in, DNOut{out}())
+end
+
+function sample(prob::DecisionProblem, decisions::NamedTuple, in::NamedTuple, out::Symbol)
+    sample(prob, decisions, in, DNOut{(out,)}())
+end
+
+function _crawl_graph(dn, in, out)
+    # We don't want to evaluate any nodes we don't have to: only the ones between the inputs
+    # and the outputs. Also, want to do them in order.
+    # TODO: This is terribly inefficient; O(n^2). Surely there's a better way.
+    # This is a rigorous graph theory problem but it's not one I know the name of,
+    #   and it's not worth any more time figuring it out
+    
+    nodes = Symbol[]
+    inter_nodes = Symbol[out...]
+    while ! isempty(inter_nodes)
+        node = popfirst!(inter_nodes)
+        if ! ((node ∈ in) || (node ∈ nodes))
+            push!(nodes, node)
+            try
+                append!(inter_nodes, dn[node])
+            catch
+                throw(ArgumentError("Initial value required for node :$(node)"))
+            end
+        end
+    end
+
+    sort!(nodes; by=(n) -> _order(dn, n))
+end
+
+function _order(dn, node)
+    # welcome to cs 101 lol    
+    if ((! (node ∈ keys(dn.graph))) || isempty(dn[node]))
+        return 0
+    end
+    1 + maximum([_order(dn, c) for c in dn[node]])
+end

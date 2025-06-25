@@ -11,7 +11,7 @@ It includes Markov chains at its simplest
 between are beloved models like POMDPs and
 Markov games.
 """
-abstract type MarkovProblem{
+struct MarkovProblem{
     N <: Multiagency,
     Z <: Observability,
     C <: Centralization,
@@ -19,7 +19,78 @@ abstract type MarkovProblem{
     R <: RewardConditioning,
     # T <: TimestepStyle,
     # G <: ConstraintStyle
-} <: DecisionProblem end
+} <: DecisionProblem 
+    impl::NamedTuple
+end
+
+# function MarkovProblem{N,Z,C,M,R}(args...) where {N,Z,C,M,R}
+#     dn = structure(Type{MarkovProblem{N,Z,C,M,R}})
+#     nodes = keys(dn.graph)
+#     order = 
+# end
+
+# TODO: Write generic functions but not macros) for case where M / R are unknown
+
+macro def_markov(name, traits...)
+    mem_presence_defined = (traits[4] == :Any)
+    reward_cond_defined  = (traits[5] == :Any)
+
+    multiagency         = traits[1]
+    observability       = traits[2]
+    centralization      = traits[3]
+    memory_presence     = (mem_presence_defined ? :M : traits[4])
+    reward_conditioning = (reward_cond_defined  ? :R : traits[5])
+
+    type_attrs = [
+        ((traits[4] == :Any) ? :M : [])
+        ((traits[5] == :Any) ? :R : [])
+    ]
+
+    # hack; brittle to changes in trait names
+    required_nodes = Symbol[
+        :sp
+        (observability == :FullyObservable) ? [] : :o
+        (reward_conditioning == :NoReward) ? [] : :r
+    ]
+
+    nodename_map = (; 
+        sp = :transition,
+        o = :observation,
+        r = :reward
+    )
+    required_names = values(nodename_map[required_nodes])
+    required_nodes_doublequote = Tuple(required_nodes) # what have we done
+    required_names_expr = Expr(:tuple, required_names...)
+
+    type_attrs_assumed = if (:M in type_attrs) && (:R in type_attrs)
+        (:(_default_mem()), :(_default_rc(reward)))
+    elseif (:M in type_attrs) && ! (:R in type_attrs)
+        (:(_default_mem()),)
+    elseif ! (:M in type_attrs) && (:R in type_attrs)
+        (:(_default_rc(reward)),)
+    else
+        ()
+    end
+
+    quote
+        $(esc(name)){$(type_attrs...)} = MarkovProblem{
+            $multiagency,
+            $observability,
+            $centralization,
+            $memory_presence,
+            $reward_conditioning
+        }
+            # function $(esc(name)){$(type_attrs...)}($(required_names...)) where {$(type_attrs...)}
+            #     impl = NamedTuple{$required_nodes_doublequote}($required_names_expr)
+            #     $(esc(name)){$(type_attrs...)}(impl)
+            # end
+
+        function $(esc(name))($(required_names...))
+            impl = NamedTuple{$required_nodes_doublequote}($required_names_expr)
+            $(esc(name)){$(type_attrs_assumed...)}(impl)
+        end
+    end
+end
 
 # Wow! That's a lot of information we're storing in the type. Is that a good idea?
 # https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-value-type
@@ -48,8 +119,7 @@ RewardConditioning(::MarkovProblem{N,Z,C,M,R}) where {N,Z,C,M,R} = R()
 #   We can provide hints for the other traits in a more ordinary manner.
 Sequentiality(::MarkovProblem) = Simultaneous()
 
-
-function structure(::Type{MarkovProblem{N,Z,C,M,R}}) where {N,Z,C,M,R}
+function structure(::Type{<: MarkovProblem{N,Z,C,M,R}}) where {N,Z,C,M,R}
 
     # TODO: All of these add either one or zero nodes; push! is the wrong way to go
     nodes = Pair[]
@@ -65,6 +135,22 @@ end
 
 forward_mapping(::MemoryPresent) = (; m = :mp, s = :sp)
 forward_mapping(::MemoryAbsent) = (; s = :sp)
+
+
+function behavior(p::MarkovProblem) 
+    # TODO: Doesn't work with plates, obv
+    # TODO: This is technically inefficient; O(n) for n nodes. There's probably a NamedTuple
+    #   way of dealing with this.
+    (;
+        sp = p.transition,
+        o  = p.observation,
+        r = p.reward
+    )
+end
+
+function nodes_for(p::Type{MarkovProblem{N,Z,C,M,R}}) where {N,Z,C,M,R}
+
+end
 
 
 # The idea here is to dispatch on traits to build up the DN. That way, any named problem
@@ -92,15 +178,16 @@ mkv_rwd(::NoAgent, ::MConditioned)   = [:r => (:m,)]
 
 mkv_rwd(::SingleOrCoop, ::SConditioned)   = [:r => (:s,)]
 mkv_rwd(::SingleOrCoop, ::SAConditioned)  = [:r => (:s, :a)]
-mkv_rwd(::SingleOrCoop, ::SASConditioned) = [:r => (:s, :a, :s)]
+mkv_rwd(::SingleOrCoop, ::SASConditioned) = [:r => (:s, :a, :sp)]
 mkv_rwd(::SingleOrCoop, ::MConditioned)   = [:r => (:mp)]
 mkv_rwd(::SingleOrCoop, ::MAConditioned)  = [:r => (:mp, :a)]
 
 mkv_rwd(::Competitive, ::SConditioned)    = [:(r[i]) => (:s,)]
 mkv_rwd(::Competitive, ::SAConditioned)   = [:(r[i]) => (:s, :a)]
-mkv_rwd(::Competitive, ::SASConditioned)  = [:(r[i]) => (:s, :a, :s)]
+mkv_rwd(::Competitive, ::SASConditioned)  = [:(r[i]) => (:s, :a, :sp)]
 mkv_rwd(::Competitive, ::MConditioned)    = [:(r[i]) => (:(mp[i]))]
 mkv_rwd(::Competitive, ::MAConditioned)   = [:(r[i]) => (:(mp[i]), :(a[i]))]
+
 
 
 # There are seven possible sets of conditioning variables for the action nodes
@@ -163,21 +250,18 @@ mkv_stt(::MultiAgent)  = [:sp => (:s, :(a[i]))]
 # TODO: Constraints / lexico / slack and sojourn not yet implemented. Should be pretty
 #   straightforward along the lines of the other nodes.
 
+"""
+    _default_rc(fn; consider_mem=false)
 
+Gives the default reward conditioning for a Markov family problem based on the reward
+function.
 
-function behavior(p::MarkovProblem, idx) 
-    # TODO: Doesn't work with plates, obv
-    # TODO: This is technically inefficient; O(n) for n nodes. There's probably a NamedTuple
-    #   way of dealing with this.
-    if idx == :sp
-        return p.transition
-    elseif idx == :o
-        return p.observation
-    elseif idx == :r
-        return p.reward
-    end
-end
-
+If the reward function is has a method for one, two, or three parameters, we assume it
+is conditioned on (s,), (s, a), or (s, a, s′) respectively, assuming the reward function is
+not intended to be conditioned on memory. If the reward function _is_ intended to be
+conditioned on memory (denoted with `consider_mem=true`), we assume it is conditioned on
+(m,) or (m, a) if it has one or two arguments respectively.
+"""
 function _default_rc(fn; consider_mem=false)
     if ! consider_mem
         if hasmethod(fn, (Any, Any, Any))
@@ -195,7 +279,15 @@ function _default_rc(fn; consider_mem=false)
         end
     end
 end
+"""
+    _default_rc()
 
+Gives the default memory presence for a Markov family problem.
+
+We assume the memory node is present when allowed, so the agent to persist information 
+between steps. If a truly memoryless approach is desired, the `MemoryAbsent` trait can
+be used as a type parameter. 
+"""
 function _default_mem()
     MemoryPresent
 end

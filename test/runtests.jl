@@ -1,5 +1,8 @@
 using Decisions
 using Test
 
-include("conditionals.jl")
-include("variants.jl")
+@testset "All tests" begin
+    include("conditionals.jl")
+    include("variants.jl")
+    include("sample.jl")
+end
