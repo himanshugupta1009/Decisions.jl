@@ -32,3 +32,6 @@ Manifest*.toml
 
 # Ignore private notes
 .private
+
+# Ignore generated docs
+docs/build

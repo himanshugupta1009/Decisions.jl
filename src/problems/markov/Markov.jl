@@ -1,5 +1,5 @@
 include("markov_family.jl")
-include("models.jl")
+include("problems.jl")
 
 export MC
 export MRP

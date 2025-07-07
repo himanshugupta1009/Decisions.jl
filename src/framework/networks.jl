@@ -1,139 +1,208 @@
 
+"""
+    DecisionGraph{structure, dynamism}
+
+Representation of a directed, acyclic, possibly repeated graph that underlies a (dynamic)
+decision network.
+
+`structure` is a NamedTuple mapping nodes to their inputs (tuples of symbols). `dynamism` is
+a named tuple mapping nodes to their next-iteration counterparts to allow for infinitely
+repeated DAGs (which underlie _dynamic_ decision networks).
 
 """
-    DecisionNetwork
+struct DecisionGraph{structure, dynamism}
+    function DecisionGraph(structure, dynamism)
+        # Decision networks should be order invariant wrt their nodes
+        #   We need a wrapper with an inner constructor to enforce that
+        #   (I'd use Set but ! isbitstype(Set))
+        # TODO: Ideally we would also optionally check for cycles here
 
-The unified representation of all decision problems. A decision network is a directed
-acyclic graph of `DNNode`s, each of which is a mapping from a set of conditioning variables 
-to a single output variable. 
 
-There is support for:
-    `iterate` (gives all pairs of (output var, distribution))
-    `index(::DecisionNetwork, in::Symbol)` (gives conditional distribution of `in`)
-    `in(idx::Symbol, ::DecisionNetwork)` (gives whether there is a node labeled `idx`,
-    including one implied by dynamic structure)
+        sorted_structure = _sortkeys(map(structure) do vars
+            # TODO: We want an immutable type here but we also want to be able to sort
+            #   Probably there is a more efficient way to do this
+            Tuple(sort([vars...]))
+        end)
 
-Dynamic decision networks are characterized as finite decision networks with nodes
-that have a step-correspondence; that is, some outputs of the decision network are inputs
-to an identical decision network at the next step. The convenience functions 
-
-    `next(::DecisionNetwork, node_name)`
-    `prev(::DecisionNetwork, node_name)`
-    
-map current nodes to their future-step name and vice versa; e.g., next(ddn, :s) = :s_prime
-and next(ddn, :s_prime) = :s.
-"""
-struct DecisionNetwork
-    forward_mappings::NamedTuple
-    reverse_mappings::NamedTuple
-    graph::NamedTuple
-
-    function DecisionNetwork(forward_mappings; nodes...) 
-        fw = forward_mappings
-        new(fw, NamedTuple{values(fw)}(keys(fw)), NamedTuple(nodes))
+        sorted_dynamism = _sortkeys(dynamism)
+        new{sorted_structure, sorted_dynamism}()
     end
-
-    DecisionNetwork(; nodes...) = new((;), NamedTuple(nodes))
 end
 
-Base.getindex(dn::DecisionNetwork, idx::Symbol) = dn.graph[idx]
-Base.iterate(n::DecisionNetwork) = iterate(pairs(n.graph))
-Base.iterate(n::DecisionNetwork, state) = iterate(pairs(n.graph), state)
-function Base.in(idx::Symbol, dn::DecisionNetwork)
-    (idx in keys(dn.reverse_mappings) || idx in keys(dn.forward_mappings) || idx in keys(dn.graph))
-end
-
-next(dn::DecisionNetwork, idx::Symbol) = dn.forward_mappings[idx]
-prev(dn::DecisionNetwork, idx::Symbol) = dn.reverse_mappings[idx]
+@generated _sortkeys(nt::NamedTuple{KS}) where {KS} =
+    :( NamedTuple{$(Tuple(sort(collect(KS))))}(nt) )
 
 
 """
-    DecisionProblem
+    DecisionNetwork{dn::DecisionGraph{structure, dynamism}} where {structure, dynamism}
 
-Abstract base class for all decision problems. 
+Representation of a decision network based on an underlying directed acyclic graph.
+
+Every type of decision problem is described by a concrete decision network (DN) or dynamic
+decision network (DDN). A decision network is a directed acyclic graph where each node is a
+conditional distribution. `structure` gives this graph as a named tuple mapping symbols
+(nodes) to tuples of symbols (conditioning variables). Not all conditioning variables need
+be defined as nodes in the structure; those that are not are interpreted as inputs.
+
+If `dynamism` is a non-empty named tuple, a _dynamic_ decision network is specified.
+`dynamism` maps node names to their next-step counterparts and vice versa (for instance,
+`:s` <=> `:sp` in an MDP.) In this case, `structure` gives the DN for a single step.
+
+A concrete decision problem provides the conditional distributions for any of the nodes (or
+none of them) in the named tuple `behavior`. Nodes not in `behavior` have distributions
+specified by the agent; that is, they are action nodes.
+
+For convenience, functions querying a problem's structure (not the underlying distributions)
+accept both `DecisionNetwork{...}` and `Type{DecisionNetwork{...}}`
+
+# Supported Base functions
+ - `keys`: Give all node names defined in the problem.
+ - `iterate`: Iterate through node names defined in the problem.
+ - `getindex(::DecisionNetwork, in::Symbol)`: Give conditional distribution of `in`, if one
+   is specified.
+ - `in(idx::Symbol, dn::DecisionNetwork)`: Give whether there is a variable labeled `idx` in
+    `dn`.
+"""
+struct DecisionNetwork{dn<:DecisionGraph}
+    behavior::NamedTuple
+end
+
+function DecisionNetwork{dn}(; nodes...) where dn
+    new{dn}((;), NamedTuple(nodes))
+end
+
+"""
+    structure(::Type{DecisionNetwork})
+    structure(::DecisionNetwork)
     
-Note the distinction between `DecisionProblem` and `DecisionNetwork`. Decision problems can
-be defined in any way (i.e., the classic tuple definition of MDPs). However, abstractly,
-decision problems correspond to a class of decision networks: for instance, MDPs correspond
-to the dynamic decision networks that have a state, action, and reward node in a Markovian
-setup.
+Give the graph structure of a decision network.
 """
-abstract type DecisionProblem end
+structure(::DecisionNetwork{DecisionGraph{S, D}}) where {S, D} = S
+structure(::Type{<:DecisionNetwork{DecisionGraph{S, D}}}) where {S, D} = S
+
 
 """
-    structure(::Type{DecisionProblem})
-    structure(p::DecisionProblem)
-
-All types of decision problems (MDPs, POMDPs, POMGs, etc.) are associated with an
-underlying decision network. `structure` gives this decision network. 
-
-As a convenience, calling `structure` on an instance of a decision problem returns the 
-structure for its decision problem type.
-
-Note that some definitions of decision problems contain ambiguities (for instance,
-the reward in an MDP might be defined on the state, the state and action, or the state,
-action, and next state). A particular type of decision problem can only admit one structure,
-so in these cases a type parameter is used to disambiguate.
+    dynamism(::Type{DecisionNetwork})
+    dynamism(::DecisionNetwork)
+    
+Give the dynamic pairs for a decision network (which maps current to next iterate node
+names).
 """
-function structure(::Type{DecisionProblem}) end
+dynamism(::DecisionNetwork{DecisionGraph{S, D}}) where {S, D} = D
+dynamism(::Type{<:DecisionNetwork{DecisionGraph{S, D}}}) where {S, D} = D
 
-@generated function structure(p::DecisionProblem)
-    # pseudoconstant for any particular type; not an expression.
-    structure(p)
+
+Base.getindex(dp::DecisionNetwork, idx::Symbol) = behavior(dp)[idx]
+
+Base.keys(dp::DecisionNetwork) = keys(structure(dp))
+Base.keys(dp::Type{<:DecisionNetwork}) = keys(structure(dp))
+
+Base.iterate(dp::DecisionNetwork) = iterate(pairs(structure(dp)))
+Base.iterate(dp::Type{<:DecisionNetwork}) = iterate(pairs(structure(dp)))
+
+Base.iterate(dp::DecisionNetwork, state) = iterate(pairs(structure(dp)), state)
+Base.iterate(dp::Type{<:DecisionNetwork}, state) = iterate(pairs(structure(dp)), state)
+
+# We have to check if `idx` is a conditioning variable for any node because it might
+# not itself be a node. This happens for DDNs: e.g., in an MDP, :s doesn't have its own
+# node, so without this check we unintuitively have !(:s ∈ MDP)
+function Base.in(idx::Symbol, dp::DecisionNetwork)
+    S = structure(dp)
+    (idx in keys(S) || any(map((cvs) -> idx ∈ cvs, S)))
 end
-# TODO: `structure` is not extensible when defined in this way due to how 
-#   generated functions work (can only see functions defined earlier, with an
-#   exception for functions defined in its module.)
-# It's substantially faster than using a `typeof`, though.
+
+function Base.in(idx::Symbol, dp::Type{<:DecisionNetwork})
+    S = structure(dp)
+    (idx in keys(S) || any(map((cvs) -> idx ∈ cvs, S)))
+end
 
 
 """
-    structure(::Type{DecisionProblem})
-    structure(p::DecisionProblem)
+    `next(dn::DecisionNetwork, node)`
+    `next(dn::Type{DecisionNetwork{_, dynamism}}, node)``
 
-All types of decision problems (MDPs, POMDPs, POMGs, etc.) are associated with an
-underlying decision network. `structure` gives this decision network. 
+Give the next-step counterpart of `node` in a [type of] decision network `dn`.
 
-As a convenience, calling `structure` on an instance of a decision problem returns the 
-structure for its decision problem type.
+`dn` must be a dynamic decision network.
 
-Note that some definitions of decision problems contain ambiguities (for instance,
-the reward in an MDP might be defined on the state, the state and action, or the state,
-action, and next state). 
+# Examples
+```jldoctest
+julia> next(MDP, :s)
+:sp
+```
 """
+next(dn::DecisionNetwork, idx::Symbol) = dynamism(dn)[idx]
+next(dn::Type{<:DecisionNetwork}, idx::Symbol) = dynamism(dn)[idx]
+
 
 """
-    behavior(p::DecisionProblem, idx)
+    `prev(dn::DecisionNetwork, node)`
+    `prev(dn::Type{DecisionNetwork{_, dynamism}}, node)``
 
-Gives the conditional distribution corresponding to the node named `idx` for `p`.
+Give the previous-step counterpart of `node` in a [type of] decision network `dn`.
 
-Specific _instances_ of decision problems can carry implementations of conditional
-distributions for nodes in the network. `behavior` gives these known distributions, if
-they exist, as a named tuple from node names (as symbols, matching those given by 
-`structure`) to `ConditionalDist`s.
+`dn` must be a dynamic decision network.
 
-Not all nodes need to have a behavior provided through through `behavior`.
-Those that do not are assumed to be decision nodes.
+# Examples
+```jldoctest
+julia> prev(MDP, :sp)
+:s
+```
 """
-function behavior(::DecisionProblem, idx) end
+prev(dn::DecisionNetwork, idx::Symbol) = findfirst((i) -> i==idx, dynamism(dn))
+prev(dn::Type{<:DecisionNetwork}, idx::Symbol) = findfirst((i) -> i==idx, dynamism(dn))
 
+
+# TODO: Examples for `structure` and `dynamism` - need to make sure they are consistent
+# # Examples
+# ```jldoctest
+# julia> dynamism(MDP)
+# (; s=:sp, sp=:s, m=:mp, mp=:m)
+
+
+
+# Convenience wrapper type for tuple of symbols
 struct DNOut{ids} end
 DNOut(name::Symbol) = DNOut{name}()
 DNOut(names...) = DNOut{names}()
 DNOut(names::Tuple) = DNOut{names}()
 
+"""
+    sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple, out::Tuple)
+    sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple, out::Symbol)
+    sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple)
+
+Sample the node(s) `out` in `dn` based on constant input values `in`, the conditional
+distributions given by `dn.behavior`, and additional distributions given in `decisions`.
+
+Only ancestors of `out`, up to (but not including) the nodes in `in`, are sampled. If any of
+the sampled nodes are not implemented by either `dn.behavior` or `decisions`, an error is
+thrown. If _both_ `dn.behavior` and `decisions` specify the same node, the implementation in
+`decisions` is preferred.
+"""
+function sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple, out::Tuple)
+    sample(dn, decisions, in, DNOut{out}())
+end
+
+function sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple, out::Symbol)
+    sample(dn, decisions, in, DNOut{(out,)}())
+end
+
+function sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple)
+    sample(dn, decisions, in, DNOut{keys(dn)}())
+end
+
+
 @generated function sample(
-    problem::DecisionProblem,
+    problem::DecisionNetwork,
     decisions,
     in::NamedTuple{ids_in},
     _::DNOut{ids_out}) where {ids_out, ids_in}
 
-    dn = structure(problem)
-
-    # TODO: Variables automatically named for their DN nodes can conflict with other names
+    graph = structure(problem)
 
     expr = quote 
-        node_defs = merge(behavior(problem), decisions) 
+        node_defs = merge(problem.behavior, decisions) 
     end
 
     for id in ids_in
@@ -144,14 +213,20 @@ DNOut(names::Tuple) = DNOut{names}()
         append!(expr.args, block.args)
     end
 
-    nodes_in_order = _crawl_graph(dn, ids_in, ids_out)
-    println([(q, _order(dn, q)) for q in nodes_in_order])
+    nodes_in_order = _crawl_graph(graph, ids_in, ids_out)
+    out_so_far = []
 
     for id in nodes_in_order
         sym = Expr(:quote, id)
-        cond_vars = dn[id]
+        cond_vars = graph[id]
         block = quote
             $id = node_defs[$sym]($(cond_vars...))
+            if isterminal($id) 
+                return NamedTuple{$out_so_far}($(out_so_far...))
+            end
+        end
+        if ids in ids_out
+            push!(out_so_far, id)
         end
         append!(expr.args, block.args)
     end
@@ -161,24 +236,15 @@ DNOut(names::Tuple) = DNOut{names}()
     end
     append!(expr.args, return_block.args)
 
-    println(expr)
     return expr
 end
 
-function sample(prob::DecisionProblem, decisions::NamedTuple, in::NamedTuple, out::Tuple)
-    sample(prob, decisions, in, DNOut{out}())
-end
-
-function sample(prob::DecisionProblem, decisions::NamedTuple, in::NamedTuple, out::Symbol)
-    sample(prob, decisions, in, DNOut{(out,)}())
-end
-
-function _crawl_graph(dn, in, out)
+function _crawl_graph(graph, in, out)
     # We don't want to evaluate any nodes we don't have to: only the ones between the inputs
     # and the outputs. Also, want to do them in order.
     # TODO: This is terribly inefficient; O(n^2). Surely there's a better way.
     # This is a rigorous graph theory problem but it's not one I know the name of,
-    #   and it's not worth any more time figuring it out
+    #   and it's not worth any more time figuring it out right now.
     
     nodes = Symbol[]
     inter_nodes = Symbol[out...]
@@ -187,20 +253,32 @@ function _crawl_graph(dn, in, out)
         if ! ((node ∈ in) || (node ∈ nodes))
             push!(nodes, node)
             try
-                append!(inter_nodes, dn[node])
+                append!(inter_nodes, graph[node])
             catch
                 throw(ArgumentError("Initial value required for node :$(node)"))
             end
         end
     end
 
-    sort!(nodes; by=(n) -> _order(dn, n))
+    sort!(nodes; by=(n) -> _order(graph, n))
 end
 
-function _order(dn, node)
+function _order(graph, node)
     # welcome to cs 101 lol    
-    if ((! (node ∈ keys(dn.graph))) || isempty(dn[node]))
+    if ((! (node ∈ keys(graph))) || isempty(graph[node]))
         return 0
     end
-    1 + maximum([_order(dn, c) for c in dn[node]])
+    1 + maximum([_order(graph, c) for c in graph[node]])
 end
+
+
+"""
+    struct Terminal end
+    
+Unique value representing the output of a decision node as being terminal or otherwise
+exceptional. Nodes with `Terminal` input always produce `Terminal` output.
+"""
+struct Terminal end
+
+isterminal(::Terminal) = true
+isterminal(::Any) = false
