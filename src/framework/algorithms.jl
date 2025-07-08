@@ -1,33 +1,10 @@
 
 abstract type DecisionAlgorithm end
 
-
 """
-    init_parameters(dm::DecisionProblem, alg::DecisionAlgorithm)
-    
+    solve(alg::DecisionAlgorithm, prob::DecisionNetwork)
+
+Calculate agent behavior for decision network `prob` using algorithm `alg` and return it as
+a NamedTuple that maps node names to `ConditionalDist`s (policies).
 """
-
-
-
-"""
-    decisions(dn::DecisionNetwork, alg::DecisionAlgorithm)    
-
-
-"""
-function decisions end
-
-
-"""
-    evaluate(dn::DecisionNetwork, alg::DecisionAlgorithm, obj::DecisionObjective)    
-
-Evaluates decisions made by `alg` in decision network `dn` according to objective `obj`.
-
-"""
-
-function decisions end
-
-function decisions(
-    alg::AbstractArray{DecisionAlgorithm}, 
-    obj::DecisionObjective, prob::DecisionNetwork)
-    # TODO: Merge behavior from all algorithms
-end
+function solve end

@@ -2,24 +2,29 @@
 
 
 
-macro SingleDecisionSetting()
+macro OfflineSetting()
     quote
-        DecisionProblem{structure, (;)}(;
-            problem,
-            policy,
-            objective
-        )
+        DecisionNetwork{DecisionGraph{
+            (; problem=(), policy=(:problem,), output=(:problem, :policy)),
+            (;)
+        }}
     end
 end
 
-const SingleDecisionSetting = @SingleDecisionSetting
+const OfflineSetting = @OfflineSetting
 
-function (@SingleDecisionSetting)(problem, objective)
+function (::@OfflineSetting)(
+    problem::DecisionNetwork, 
+    alg::DecisionAlgorithm, 
+    objective::DecisionObjective
+)
     DecisionNetwork(;
-        problem = DeterministicDist(() -> Problem, DecisionNetwork)
-        policy = 
-        objective
+        problem = SingletonDist(problem),
+        policy = ConditionalDist((:problem, :meta)) do (problem, meta)
+            solve(alg, problem; meta)
+        end,
+        output = ConditionalDist((:problem, :policy, :meta)) do (problem, policy, meta)
+            evaluate(objective, problem, policy; meta)
+        end
     )
 end
-
-

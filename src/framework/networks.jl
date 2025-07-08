@@ -163,33 +163,28 @@ prev(dn::Type{<:DecisionNetwork}, idx::Symbol) = findfirst((i) -> i==idx, dynami
 
 # Convenience wrapper type for tuple of symbols
 struct DNOut{ids} end
-DNOut(name::Symbol) = DNOut{name}()
+DNOut(name::Symbol) = DNOut{(name,)}()
 DNOut(names...) = DNOut{names}()
 DNOut(names::Tuple) = DNOut{names}()
 
 """
-    sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple, out::Tuple)
-    sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple, out::Symbol)
-    sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple)
+    sample(dn::DecisionNetwork [, decisions::NamedTuple, in::NamedTuple, out::Tuple])
 
-Sample the node(s) `out` in `dn` based on constant input values `in`, the conditional
-distributions given by `dn.behavior`, and additional distributions given in `decisions`.
+Sample dynamic decision network `dn` based on input values `in` and node implementations
+provided by `decisions` and `dn.behavior` (or
+return `Terminal()` if a terminal condition is reached).
 
 Only ancestors of `out`, up to (but not including) the nodes in `in`, are sampled. If any of
 the sampled nodes are not implemented by either `dn.behavior` or `decisions`, an error is
 thrown. If _both_ `dn.behavior` and `decisions` specify the same node, the implementation in
 `decisions` is preferred.
 """
-function sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple, out::Tuple)
+function sample(
+    dn::DecisionNetwork, 
+    decisions::NamedTuple=(;), 
+    in::NamedTuple=(;), 
+    out::Union{Tuple{Vararg{Symbol}}, Symbol}=())
     sample(dn, decisions, in, DNOut{out}())
-end
-
-function sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple, out::Symbol)
-    sample(dn, decisions, in, DNOut{(out,)}())
-end
-
-function sample(dn::DecisionNetwork, decisions::NamedTuple, in::NamedTuple)
-    sample(dn, decisions, in, DNOut{keys(dn)}())
 end
 
 
@@ -222,7 +217,7 @@ end
         block = quote
             $id = node_defs[$sym]($(cond_vars...))
             if isterminal($id) 
-                return NamedTuple{$out_so_far}($(out_so_far...))
+                return Terminal()
             end
         end
         if ids in ids_out
@@ -245,7 +240,7 @@ function _crawl_graph(graph, in, out)
     # TODO: This is terribly inefficient; O(n^2). Surely there's a better way.
     # This is a rigorous graph theory problem but it's not one I know the name of,
     #   and it's not worth any more time figuring it out right now.
-    
+    distribution
     nodes = Symbol[]
     inter_nodes = Symbol[out...]
     while ! isempty(inter_nodes)
@@ -270,6 +265,41 @@ function _order(graph, node)
     end
     1 + maximum([_order(graph, c) for c in graph[node]])
 end
+
+# """
+#     simulate(dn::DecisionNetwork [, decisions::NamedTuple, in::NamedTuple, out::Tuple])
+
+# Simulate dynamic decision network `dn` based on input values `in` and node implementations
+# provided by `decisions` and `dn.behavior`, proceeding through iterates
+# of the network until any node yields `Terminal()`. 
+
+# In a non-dynamic decision network, functionally identical to `sample`.
+# """
+# function simulate(
+#     dn::DecisionNetwork, 
+#     decisions::NamedTuple=(;), 
+#     in::NamedTuple=(;), 
+#     out::Union{Tuple{Vararg{Symbol}}, Symbol}=())
+
+#     simulate(dn, decisions, in, DNOut{out}())
+# end
+
+# @generated function simulate(
+#     dn::DecisionNetwork{graph}, 
+#     decisions::NamedTuple, 
+#     in::NamedTuple{in_ids}, 
+#     out::DNOut{out_ids}) where {graph, out_ids, in_ids}
+
+#     trace_ids = Tuple(union(Set(a), Set(b)))
+
+#     present_ids = keys(dynamism(dn))
+#     future_ids = dynamism(dn)[present_ids] # need to ensure they're in corresponding order
+
+#     quote
+#         s = sample(dn, decisions, in, $trace_ids)
+#         in = NamedTuple{$present_ids}(s)
+#     end
+# end
 
 
 """
