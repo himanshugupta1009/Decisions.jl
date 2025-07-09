@@ -13,7 +13,7 @@ include("framework/conditional_dists.jl")
 export ConditionalDist
 export AnonymousDist
 # export UniformDist
-# export EmptyDist
+export EmptyDist
 # export CategoricalDist
 # export DeterministicDist
 export @ConditionalDist
@@ -34,6 +34,7 @@ export simulate
 export next
 export prev
 export graph
+export Terminal
 
 include("framework/algorithms.jl")
 export DecisionAlgorithm

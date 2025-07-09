@@ -339,6 +339,11 @@ end
         end
         append!(first_pass_block.args, block.args)
     end
+    for (node, node_prime) in pairs(dynamism(problem))
+        push!(first_pass_block.args, quote
+            $node = $node_prime
+        end)
+    end
     push!(first_pass_block.args, quote
         fn(NamedTuple{$ids_out}(($(ids_out...),))) && return
     end)
@@ -354,6 +359,11 @@ end
             isterminal($id) && return
         end
         append!(second_pass_block.args, block.args)
+    end
+    for (node, node_prime) in pairs(dynamism(problem))
+        push!(second_pass_block.args, quote
+            $node = $node_prime
+        end)
     end
     push!(second_pass_block.args, quote
         fn(NamedTuple{$ids_out}(($(ids_out...),))) && return
@@ -374,7 +384,7 @@ end
     struct Terminal end
     
 Unique value representing the output of a decision node as being terminal or otherwise
-exceptional. Nodes with `Terminal` input always produce `Terminal` output.
+exceptional. 
 """
 struct Terminal end
 

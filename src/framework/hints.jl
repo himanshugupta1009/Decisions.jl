@@ -1,6 +1,4 @@
 
-
-
 abstract type ProblemTrait end
 
 abstract type Sequentiality <: ProblemTrait end
