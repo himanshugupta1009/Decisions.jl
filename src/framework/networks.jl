@@ -67,8 +67,8 @@ struct DecisionNetwork{dn<:DecisionGraph}
     behavior::NamedTuple
 end
 
-function DecisionNetwork{dn}(; nodes...) where dn
-    new{dn}((;), NamedTuple(nodes))
+function DecisionNetwork{graph}(; nodes...) where graph
+    new{graph}((;), NamedTuple(nodes))
 end
 
 """

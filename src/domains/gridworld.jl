@@ -32,8 +32,8 @@ end
 
 function Iceworld(; p_slip, nrows, ncols, holes, target)
     transition = @ConditionalDist Tuple{Int, Int} begin
-        function support(; kw...)
-            if isempty(kw)
+        function support(; s, a)
+            if ismissing(s) && ismissing(a)
                 GridPointSpace(nrows, ncols)
             else
                 FiniteSpace(
@@ -91,33 +91,25 @@ function Iceworld(; p_slip, nrows, ncols, holes, target)
         end
     end
 
-    # action = EmptyDist(FiniteSpace([NORTH, SOUTH, EAST, WEST]))
-
-    # TODO: Markov family problems still don't carry action support info
-    #   Also the constructors aren't smart enough to figure out whether memory is present
-    #   Need to fix the brokenparts resulting from changes to ConditionalDist
-    #   Eventually should be:
-    # MDP(;
-    #     a = action,
-    #     s = transition,
-    #     r = reward
-    # )
-    MDP(transition, reward)
+    MDP(;
+        sp=transition,
+        r=reward
+    )
 end
 
-# mdp = Iceworld(; p_slip=0.3, nrows=10, ncols=10, holes=(), target=(10, 10))
+mdp = Iceworld(; p_slip=0.3, nrows=10, ncols=10, holes=(), target=(10, 10))
 
-# π = @ConditionalDist Tuple{Int, Int} begin
-#     function rand(rng; s, m)
-#         rand(rng, [NORTH, SOUTH, EAST, WEST])
-#     end
-# end
+π = @ConditionalDist Tuple{Int, Int} begin
+    function rand(rng; s, m)
+        rand(rng, [NORTH, SOUTH, EAST, WEST])
+    end
+end
 
-# μ = @ConditionalDist Nothing begin
-#     rand(rng; m, s, a) = nothing
-# end
+μ = @ConditionalDist Nothing begin
+    rand(rng; m, s, a) = nothing
+end
 
-# simulate(mdp, (; a=π, mp=μ), (; s=(1, 1), m=nothing)) do output
-#     println(output)
-#     false
-# end
+simulate(mdp, (; a=π, mp=μ), (; s=(1, 1), m=nothing)) do output
+    println(output)
+    false
+end

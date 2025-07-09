@@ -1,25 +1,28 @@
 
-abstract type ProblemTrait end
+abstract type DecisionNetworkTrait end
 
-abstract type Sequentiality <: ProblemTrait end
+# For convenience
+Base.Tuple(t::DecisionNetworkTrait) = (t,)
+
+abstract type Sequentiality <: DecisionNetworkTrait end
 struct Sequential <: Sequentiality end
 struct Simultaneous <: Sequentiality end
 
-abstract type Observability <: ProblemTrait end
+abstract type Observability <: DecisionNetworkTrait end
 struct FullyObservable <: Observability end
 struct PartiallyObservable <: Observability end
 
 
 # TODO: Technically this is weird because Multiagency{1 or 0} are possible
 #   Can fix this by reorganizing the type tree but not high concern
-abstract type Multiagency <: ProblemTrait end
+abstract type Multiagency <: DecisionNetworkTrait end
 struct NoAgent <: Multiagency end
 struct SingleAgent <: Multiagency end
-abstract type MultiAgent{N} <: Multiagency end
-struct Cooperative{N} <: MultiAgent{N} end
-struct Competitive{N} <: MultiAgent{N} end
+abstract type MultiAgent <: Multiagency end
+struct Cooperative <: MultiAgent end
+struct Competitive <: MultiAgent end
 
-abstract type MemoryPresence <: ProblemTrait end
+abstract type MemoryPresence <: DecisionNetworkTrait end
 struct MemoryPresent <: MemoryPresence end
 struct MemoryAbsent <: MemoryPresence end
 # """
@@ -33,7 +36,7 @@ struct MemoryAbsent <: MemoryPresence end
 # the underlying DN, each of these variants is technically a different type of decision
 # problem. 
 # """
-abstract type RewardConditioning <: ProblemTrait end
+abstract type RewardConditioning <: DecisionNetworkTrait end
 struct ConditionedOn{ids} <: RewardConditioning end
 struct NoReward <: RewardConditioning end
 
@@ -42,7 +45,7 @@ struct NoReward <: RewardConditioning end
 # struct Constrained <: Constrainedness end
 # struct Lexicographic <: Constrainedness end
 
-abstract type Centralization <: ProblemTrait end
+abstract type Centralization <: DecisionNetworkTrait end
 struct Centralized <: Centralization end
 struct Decentralized <: Centralization end
 
@@ -51,7 +54,7 @@ struct Decentralized <: Centralization end
 # struct DynamicTime <: Timestep end
 
 
-abstract type Terminality <: ProblemTrait end
+abstract type Terminality <: DecisionNetworkTrait end
 struct NeverTerminal <: Terminality end
 struct MaybeTerminal <: Terminality end
 struct AlwaysTerminal <: Terminality end

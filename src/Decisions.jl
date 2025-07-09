@@ -23,6 +23,7 @@ export rand!
 export pdf
 export logpdf
 export fix
+export conditions
 
 include("framework/networks.jl")
 export DecisionGraph
@@ -48,7 +49,7 @@ export OfflineSetting
 
 
 include("framework/hints.jl")
-export ProblemTrait
+export DecisionNetworkTrait
 export Sequentiality
 export Sequential
 export Simultaneous
@@ -85,9 +86,7 @@ export transform
 
 include("problems/markov/Markov.jl")
 export MarkovProblem
-export POMDP
 export @def_markov
-export @memoryless
 
 
 const NewVal{T} = Val{T}
