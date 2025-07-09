@@ -5,7 +5,7 @@ end
 
 # There is no update_hyperparameters!(...).
 
-function ValueIteration(prob::DecisionProblem)
+function ValueIteration(prob::DecisionNetwork)
     reward_space = support(prob[:r])
     state_space = support(prob[:sp])
 
@@ -46,7 +46,7 @@ function update_parameters(agent::DecisionAgent, behavior::ConditionalDist)
 
 end
 
-function behavior(::DecisionProblem, ::DecisionAgent) end
+function behavior(::DecisionNetwork, ::DecisionAgent) end
 
 function DecisionMaking.initialvars!(Π::VI)
 

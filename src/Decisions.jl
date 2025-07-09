@@ -30,8 +30,10 @@ export DecisionNetwork
 export structure
 export dynamism
 export sample
+export simulate
 export next
 export prev
+export graph
 
 include("framework/algorithms.jl")
 export DecisionAlgorithm

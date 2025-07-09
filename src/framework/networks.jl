@@ -92,6 +92,22 @@ dynamism(::DecisionNetwork{DecisionGraph{S, D}}) where {S, D} = D
 dynamism(::Type{<:DecisionNetwork{DecisionGraph{S, D}}}) where {S, D} = D
 
 
+"""
+    behavior(::DecisionNetwork)
+    
+Give the conditional distributions underling the nodes of a decision network.
+"""
+behavior(dn::DecisionNetwork) = dn.behavior
+
+"""
+    graph(::DecisionNetwork)
+
+Get the underlying graph for a decision network.
+"""
+graph(::DecisionNetwork{G}) where {G} = G
+graph(::Type{<: DecisionNetwork{G}}) where {G} = G
+
+
 Base.getindex(dp::DecisionNetwork, idx::Symbol) = behavior(dp)[idx]
 
 Base.keys(dp::DecisionNetwork) = keys(structure(dp))
@@ -209,7 +225,6 @@ end
     end
 
     nodes_in_order = _crawl_graph(graph, ids_in, ids_out)
-    out_so_far = []
 
     for id in nodes_in_order
         sym = Expr(:quote, id)
@@ -219,9 +234,6 @@ end
             if isterminal($id) 
                 return Terminal()
             end
-        end
-        if ids in ids_out
-            push!(out_so_far, id)
         end
         append!(expr.args, block.args)
     end
@@ -240,7 +252,6 @@ function _crawl_graph(graph, in, out)
     # TODO: This is terribly inefficient; O(n^2). Surely there's a better way.
     # This is a rigorous graph theory problem but it's not one I know the name of,
     #   and it's not worth any more time figuring it out right now.
-    distribution
     nodes = Symbol[]
     inter_nodes = Symbol[out...]
     while ! isempty(inter_nodes)
@@ -266,41 +277,98 @@ function _order(graph, node)
     1 + maximum([_order(graph, c) for c in graph[node]])
 end
 
-# """
-#     simulate(dn::DecisionNetwork [, decisions::NamedTuple, in::NamedTuple, out::Tuple])
+"""
+    simulate(fn, dn::DecisionNetwork [, decisions::NamedTuple, in::NamedTuple, out::Tuple])
 
-# Simulate dynamic decision network `dn` based on input values `in` and node implementations
-# provided by `decisions` and `dn.behavior`, proceeding through iterates
-# of the network until any node yields `Terminal()`. 
+Step through iterates of dynamic decision network `dn` based on input values `in` and
+distributions provided by `decisions` and `dn.behavior`, executing `fn!` each iterate on the
+values of `output` nodes, until Terminal() is sampled from any node or `fn` returns `false`. 
 
-# In a non-dynamic decision network, functionally identical to `sample`.
-# """
-# function simulate(
-#     dn::DecisionNetwork, 
-#     decisions::NamedTuple=(;), 
-#     in::NamedTuple=(;), 
-#     out::Union{Tuple{Vararg{Symbol}}, Symbol}=())
+In a non-dynamic decision network, functionally identical to `sample`.
+"""
+function simulate(
+    fn,
+    problem::DecisionNetwork, 
+    decisions::NamedTuple=(;), 
+    in::NamedTuple=(;), 
+    out::Union{Tuple{Vararg{Symbol}}, Symbol, Nothing}=nothing)
 
-#     simulate(dn, decisions, in, DNOut{out}())
-# end
+    dnout = if isnothing(out)
+        DNOut{keys(structure(problem))}()
+    else
+        DNOut{out}()
+    end
 
-# @generated function simulate(
-#     dn::DecisionNetwork{graph}, 
-#     decisions::NamedTuple, 
-#     in::NamedTuple{in_ids}, 
-#     out::DNOut{out_ids}) where {graph, out_ids, in_ids}
+    simulate(fn, problem, decisions, in, dnout)
+end
 
-#     trace_ids = Tuple(union(Set(a), Set(b)))
+@generated function simulate(
+    fn,
+    problem::DecisionNetwork, 
+    decisions::NamedTuple, 
+    in::NamedTuple{ids_in}, 
+    _::DNOut{ids_out}) where {ids_out, ids_in}
 
-#     present_ids = keys(dynamism(dn))
-#     future_ids = dynamism(dn)[present_ids] # need to ensure they're in corresponding order
+    node_structure = structure(problem)
 
-#     quote
-#         s = sample(dn, decisions, in, $trace_ids)
-#         in = NamedTuple{$present_ids}(s)
-#     end
-# end
+    present_ids = keys(dynamism(problem))
+    future_ids = values(dynamism(problem))
+    nodes_in_order = _crawl_graph(node_structure, ids_in, ids_out)
 
+    # Zeroeth pass: Inputs
+    zeroeth_pass_block = quote 
+        node_defs = merge(problem.behavior, decisions) 
+    end
+    for id in ids_in
+        sym = Expr(:quote, id)
+        block = quote
+            $id = in[$sym]
+        end
+        append!(zeroeth_pass_block.args, block.args)
+    end
+
+
+    # First pass: intitial defs; can't use rand
+    first_pass_block = quote end
+    for id in nodes_in_order
+        sym = Expr(:quote, id)
+        cond_vars = node_structure[id]
+        block = quote
+            $id = rand(node_defs[$sym]; $(cond_vars...))
+            isterminal($id) && return
+        end
+        append!(first_pass_block.args, block.args)
+    end
+    push!(first_pass_block.args, quote
+        fn(NamedTuple{$ids_out}(($(ids_out...),))) && return
+    end)
+
+
+    # Second and further pass: rand available
+    second_pass_block = quote end
+    for id in nodes_in_order
+        sym = Expr(:quote, id)
+        cond_vars = node_structure[id]
+        block = quote
+            $id = rand!(node_defs[$sym], $id; $(cond_vars...))
+            isterminal($id) && return
+        end
+        append!(second_pass_block.args, block.args)
+    end
+    push!(second_pass_block.args, quote
+        fn(NamedTuple{$ids_out}(($(ids_out...),))) && return
+    end)
+
+    q = quote
+        $zeroeth_pass_block
+        $first_pass_block
+        while true
+            $second_pass_block
+        end
+    end
+    println(q)
+    q
+end
 
 """
     struct Terminal end

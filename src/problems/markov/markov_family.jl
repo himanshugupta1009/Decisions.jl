@@ -311,21 +311,25 @@ conditioned on memory (denoted with `consider_mem=true`), we assume it is condit
 (m,) or (m, a) if it has one or two arguments respectively.
 """
 function default_mkv_reward_conditioning(fn; consider_mem=false)
-    if ! consider_mem
-        if hasmethod(fn, (Any, Any, Any))
-            ConditionedOn{(:s, :a, :sp)}
-        elseif hasmethod(fn, (Any, Any))
-            ConditionedOn{(:s, :a)}
-        else
-            ConditionedOn{(:s,)}
-        end
-    else
-        if hasmethod(fn, (Any, Any))
-            ConditionedOn{(:m, :a)}
-        else
-            ConditionedOn{(:m,)}
-        end
-    end
+
+    ConditionedOn{(:s, :a, :sp)}
+
+    # TODO: Implementing ConditionalDist broke this
+    # if ! consider_mem
+    #     if hasmethod(fn, (Any, Any, Any))
+    #         ConditionedOn{(:s, :a, :sp)}
+    #     elseif hasmethod(fn, (Any, Any))
+    #         ConditionedOn{(:s, :a)}
+    #     else
+    #         ConditionedOn{(:s,)}
+    #     end
+    # else
+    #     if hasmethod(fn, (Any, Any))
+    #         ConditionedOn{(:m, :a)}
+    #     else
+    #         ConditionedOn{(:m,)}
+    #     end
+    # end
 end
 """
     default_mkv_memory_presence()

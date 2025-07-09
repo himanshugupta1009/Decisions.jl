@@ -52,3 +52,8 @@ struct Decentralized <: Centralization end
 # struct FixedTime <: Timestep end
 # struct DynamicTime <: Timestep end
 
+
+abstract type Terminality <: ProblemTrait end
+struct NeverTerminal <: Terminality end
+struct MaybeTerminal <: Terminality end
+struct AlwaysTerminal <: Terminality end

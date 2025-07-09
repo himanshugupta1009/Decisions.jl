@@ -6,7 +6,7 @@
 
     pomdp = POMDP(T, Z, R)
 
-    @test pomdp isa DecisionProblem
+    @test pomdp isa DecisionNetwork
 end
 
 @testset "Disambiguate based on reward conditioning" begin

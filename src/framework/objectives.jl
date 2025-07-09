@@ -35,10 +35,28 @@ function evaluate(
     rvs = obj.initial_configuration
     agg_discount = 1
     sum = 0
-    while ! obj.terminal(rvs)
+    while ! isterminal(rvs)
         rvs = sample(dn, policy, rvs)
         sum += agg_discount * rvs[obj.reward_node]
         agg_discount *= obj.discount
     end
     sum
+end
+
+struct Trace <: DecisionObjective
+    function evaluate(
+        obj::SingleDiscountedReward,
+        dn::DecisionNetwork,
+        policy::NamedTuple,
+    )
+        rvs = obj.initial_configuration
+        agg_discount = 1
+        sum = 0
+        while ! isterminal(rvs)
+            rvs = sample(dn, policy, rvs)
+            sum += agg_discount * rvs[obj.reward_node]
+            agg_discount *= obj.discount
+        end
+        sum
+    end
 end
