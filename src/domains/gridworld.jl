@@ -79,6 +79,7 @@ function Iceworld(; p_slip, nrows, ncols, holes, target)
         end
     end
 
+
     reward = @ConditionalDist Real begin
         function rand(rng; s, a, sp)
             if sp == target
@@ -90,10 +91,12 @@ function Iceworld(; p_slip, nrows, ncols, holes, target)
             end
         end
     end
+    println(conditions(reward))
 
     MDP(;
         sp=transition,
-        r=reward
+        r=reward,
+        a=FiniteSpace([NORTH, SOUTH, EAST, WEST])
     )
 end
 

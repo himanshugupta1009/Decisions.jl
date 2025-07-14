@@ -198,17 +198,13 @@ struct AnonymousDist{K, T,
     end
 end
 
-function support(cd::AnonymousDist; kwargs...)
-    cd.support(; kwargs...)
-end
-
-function Base.rand(rng::AbstractRNG, cd::AnonymousDist{K, T, A, B, C, D, E, F}; kwargs...
-)::Union{T, Terminal} where {K, T, A, B, C, D, E, F}
+function Base.rand(rng::AbstractRNG, cd::AnonymousDist{K, T}; kwargs...
+)::Union{T, Terminal} where {K, T}
     cd.rand(rng; kwargs...)
 end
 
-function Base.rand(cd::AnonymousDist{K, T, A, B, C, D, E, F}; kwargs...
-)::Union{T, Terminal} where {K, T, A, B, C, D, E, F}
+function Base.rand(cd::AnonymousDist{K, T}; kwargs...
+)::Union{T, Terminal} where {K, T}
     cd.rand(Random.default_rng(); kwargs...)
 end
 
@@ -224,8 +220,8 @@ function rand!(cd::AnonymousDist, dest; kwargs...)
     rand!(Random.default_rng(), cd, dest; kwargs...)
 end
 
-function rand!(rng::AbstractRNG, cd::AnonymousDist{K, T, A, B, C, D, E, F}, dest; kwargs...
-)::Union{T, Terminal} where {K, T, A, B, C, D, E, F}
+function rand!(rng::AbstractRNG, cd::AnonymousDist{K, T}, dest; kwargs...
+)::Union{T, Terminal} where {K, T}
     if ismissing(cd.rand!)
         rand(rng, cd; kwargs...)
     else
@@ -241,12 +237,12 @@ function pdf(cd::AnonymousDist, x; kwargs...)::Float64
     end
 end
 
-function support(cd::AnonymousDist{K, T, A, B, C, D, E, F}; kwargs...
-) where {K, T, A, B, C, D, E, F}
+function support(cd::AnonymousDist{K, T}; kwargs...
+) where {K, T}
     if ismissing(cd.support)
         TypeSpace{T}()
     else
-        cd.pdf(x; kwargs...)
+        cd.support(; kwargs...)
     end
 end
 
@@ -271,3 +267,22 @@ function Base.convert(::Type{ConditionalDist{K}}, s::Space{T}) where {K, T}
     f = () -> s
     UndefinedDist{K, T, typeof(f)}(f)
 end
+
+@generated function broadcast_rand(::ConditionalDist{K, T}, rng, plates; kwargs...) where {K, T}
+
+end
+
+
+@generated function broadcast_rand!(::ConditionalDist{K, T}, rng, dest, plates; kwargs...) where {K, T}
+
+
+    quote
+        broadcast(; K..., plates...)
+    end
+end
+
+# a = broadcast!(edit, )
+
+
+# One-d:
+# broadcast!()

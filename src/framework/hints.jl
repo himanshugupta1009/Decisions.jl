@@ -37,8 +37,10 @@ struct MemoryAbsent <: MemoryPresence end
 # problem. 
 # """
 abstract type RewardConditioning <: DecisionNetworkTrait end
-struct ConditionedOn{ids} <: RewardConditioning end
 struct NoReward <: RewardConditioning end
+struct ConditionedOn{ids} <: RewardConditioning 
+    ConditionedOn(ids...) = new{Tuple(sort([ids...]))}()
+end
 
 # abstract type ConstraintStyle <: MarkovTrait end
 # struct Unconstrained <: Constrainedness end

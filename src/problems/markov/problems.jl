@@ -1,40 +1,28 @@
 
 
-# # Remaining to be done:
-# # MMDP
-# # MG
-# # MPOMDP
-# # POMG
+const _0A = NoAgent()
+const _1A = SingleAgent()
+const _CA = Cooperative()
+const _XA = Competitive()
 
-# """
-#     MC
+const _FO = FullyObservable()
+const _PO = PartiallyObservable()
 
-# A Markov chain.
-# """
-# @def_markov MC    NoAgent     FullyObservable     Centralized MemoryAbsent NoReward
-# @def_markov MRP   NoAgent     FullyObservable     Centralized MemoryAbsent Any
-# @def_markov MDP   SingleAgent FullyObservable     Centralized Any Any
-# @def_markov HMM   NoAgent     PartiallyObservable Centralized Any NoReward
-# @def_markov POMDP SingleAgent PartiallyObservable Centralized Any Any
+const _CC = Centralized()
+const _DC = Decentralized()
+const __C = Centralized() # default
 
+const _AM = MemoryAbsent()
+const _PM = MemoryPresent()
+const __M = (MemoryAbsent(), MemoryPresent()) # default
 
+const _NR = NoReward()
+const _SR = (ConditionedOn(:s), ConditionedOn(:s, :sp))
+const _AR = (ConditionedOn(:s), ConditionedOn(:s, :a), ConditionedOn(:s, :a, :sp)) 
+const _MR = (ConditionedOn(:m), ConditionedOn(:m, :a), ConditionedOn(:m, :a, :mp)) 
 
-# # function transform(::ToTrait{SingleAgent}, p1::MarkovProblem{NoAgent,Z,C,M,R}) where {Z,C,M,R}
-# #     MarkovProblem{SingleAgent,Z,C,M,R}(p1.impl)
-# # end
-
-# # function transform(::ToTrait{MultiAgent{N}}, p1::MarkovProblem{SingleAgent,Z,C,M,R}) where {N,Z,C,M,R}
-# #     MarkovProblem{MultiAgent{N},Z,C,M,R}(p1.impl)
-# # end
-
-# # function transform(::ToTrait{Decentralized}, p1::MarkovProblem{N,Z,Centralized,M,R}) where {N,Z,C,M,R}
-# #     MarkovProblem{N,Z,Centralized,M,R}(p1.impl)
-# # end
-
-# # function transform(::ToTrait{Centralized}, p1::MarkovProblem{N,Z,Decentralized,M,R}) where {N,Z,C,M,R}
-# #     MarkovProblem{N,Z,Decentralized,M,R}(p1.impl)
-# # end
-
-# # function transform(t::ToTrait{PartiallyObservable}, p1::MarkovProblem{N,FullyObservable,C,M,R}) where {N,Z,C,M,R}
-# #     MarkovProblem{N,FullyObservable,C,M,R}(merge(p1.impl, (o = t.obs_fn)))
-# # end
+@markov_alias MC    MarkovTraits(_0A, _FO, __C, __M, _NR)
+@markov_alias MRP   MarkovTraits(_0A, _FO, __C, __M, _SR)
+@markov_alias HMM   MarkovTraits(_0A, _PO, __C, __M, _SR)
+@markov_alias MDP   MarkovTraits(_1A, _FO, __C, __M, _AR)
+@markov_alias POMDP MarkovTraits(_1A, _PO, __C, __M, _AR)

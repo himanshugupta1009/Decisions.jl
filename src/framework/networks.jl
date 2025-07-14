@@ -63,12 +63,21 @@ accept both `DecisionNetwork{...}` and `Type{DecisionNetwork{...}}`
  - `in(idx::Symbol, dn::DecisionNetwork)`: Give whether there is a variable labeled `idx` in
     `dn`.
 """
-struct DecisionNetwork{dn<:DecisionGraph}
-    behavior::NamedTuple
+struct DecisionNetwork{graph<:DecisionGraph, B<:NamedTuple}
+    behavior::B
+
+    function DecisionNetwork{graph}(bhv) where {graph<:DecisionGraph{structure, dynamism}} where {structure, dynamism}
+        println(keys(bhv))
+        bhv_as_dists = map(keys(bhv)) do node_id
+            convert(ConditionalDist{structure[node_id]}, bhv[node_id])
+        end
+        new_bhv = NamedTuple{keys(bhv)}(bhv_as_dists)
+        new{graph, typeof(new_bhv)}(new_bhv)
+    end
 end
 
 function DecisionNetwork{graph}(; nodes...) where graph
-    new{graph}((;), NamedTuple(nodes))
+    DecisionNetwork{graph}(NamedTuple(nodes))
 end
 
 """
@@ -77,8 +86,8 @@ end
     
 Give the graph structure of a decision network.
 """
-structure(::DecisionNetwork{DecisionGraph{S, D}}) where {S, D} = S
-structure(::Type{<:DecisionNetwork{DecisionGraph{S, D}}}) where {S, D} = S
+structure(::DecisionNetwork{DecisionGraph{S}}) where {S} = S
+structure(::Type{<:DecisionNetwork{DecisionGraph{S}}}) where {S} = S
 
 
 """

@@ -51,7 +51,10 @@ end
 function markov_type(t::MarkovConcreteTraits)
     structure = markov_structure(t)
     dynamism = markov_dynamism(t)
-    DecisionNetwork{DecisionGraph{structure, dynamism}}
+    graph = DecisionGraph(structure, dynamism)
+    DecisionNetwork{typeof(graph)}
+    # TODO: Actually instantiating the graph is important because otherwise we can't
+    # make sure the names are sorted. It's an awfully subtle gotcha.
 end
 
 function markov_type(t::MarkovTraits)
@@ -62,11 +65,11 @@ function markov_type(t::MarkovTraits)
 end
 
 function markov_concretize_traits(traits::MarkovTraits, behavior)
-    M = (:mp ∈ behavior) ? MemoryPresent() : MemoryAbsent()
-    R = (:r  ∈ behavior) ? RewardConditioning{conditions(behavior[:r])}() : NoReward()
-    Z = (:o  ∈ behavior) ? PartiallyObservable() : FullyObservable()
+    M = (:mp ∈ keys(behavior)) ? MemoryPresent() : MemoryAbsent()
+    R = (:r  ∈ keys(behavior)) ? ConditionedOn(conditions(behavior[:r])...) : NoReward()
+    Z = (:o  ∈ keys(behavior)) ? PartiallyObservable() : FullyObservable()
 
-    N = if :a ∈ behavior
+    N = if :a ∈ keys(behavior)
         length(traits.N)==1 || throw(ArgumentError("Cannot infer multiagency of problem"))
         traits.N[1]
     else NoAgent()
