@@ -267,22 +267,3 @@ function Base.convert(::Type{ConditionalDist{K}}, s::Space{T}) where {K, T}
     f = () -> s
     UndefinedDist{K, T, typeof(f)}(f)
 end
-
-@generated function broadcast_rand(::ConditionalDist{K, T}, rng, plates; kwargs...) where {K, T}
-
-end
-
-
-@generated function broadcast_rand!(::ConditionalDist{K, T}, rng, dest, plates; kwargs...) where {K, T}
-
-
-    quote
-        broadcast(; K..., plates...)
-    end
-end
-
-# a = broadcast!(edit, )
-
-
-# One-d:
-# broadcast!()
