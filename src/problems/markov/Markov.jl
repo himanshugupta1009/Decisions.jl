@@ -6,3 +6,4 @@ export MRP
 export MDP
 export HMM
 export POMDP
+export CoMDP

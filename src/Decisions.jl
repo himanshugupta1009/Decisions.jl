@@ -4,6 +4,7 @@ using Parameters
 using Distributions
 using Random
 using ExprTools
+using StaticArrays
 
 include("framework/spaces.jl")
 export Space
@@ -62,6 +63,10 @@ export Multiagency
 export NoAgent
 export SingleAgent
 export MultiAgent
+export DefiniteAgents
+export IndefiniteAgents
+
+export Cooperation
 export Cooperative
 export Competitive
 
@@ -71,6 +76,7 @@ export MemoryAbsent
 
 export RewardConditioning
 export ConditionedOn
+export NoReward
 
 export Centralization
 export Centralized
@@ -85,11 +91,5 @@ export Memoryless
 export transform
 
 include("problems/markov/Markov.jl")
-export MarkovProblem
-export @def_markov
-
-
-const NewVal{T} = Val{T}
-export NewVal
 
 end # module Decisions

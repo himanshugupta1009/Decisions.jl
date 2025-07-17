@@ -8,6 +8,8 @@ a random variable of type `T`.
 abstract type ConditionalDist{K, T} end
 
 
+Base.eltype(::ConditionalDist{K, T}) where {K, T} = T
+
 """
     support(cd::ConditionalDist{K, T}; kwargs...)
 
@@ -33,7 +35,7 @@ conditions(::ConditionalDist{K, T}) where {K, T} = K
 
 
 """
-    rand!(rng=default_rng(), cd::ConditionalDist, dest; kwargs...)
+    rand!(rng=default_rng(), cd::ConditionalDist{K, T}, dest::T; kwargs...) where {K, T}
 
 Sample from a conditional distribution (in place using `dest` if possible), with the
 conditioning variables taking on the values in `kwargs`.
@@ -41,10 +43,10 @@ conditioning variables taking on the values in `kwargs`.
 Returns `dest` if in-place modification is successful; otherwise, returns a new instance.
 By default, never modifies in place and defers to `rand`.
 """
-function rand!(rng::AbstractRNG, cd::ConditionalDist, dest; kwargs...)
+function rand!(rng::AbstractRNG, cd::ConditionalDist{K, T}, dest::T; kwargs...) where {K, T}
     rand(rng, cd; kwargs...)
 end
-function rand!(cd::ConditionalDist, dest; kwargs...)
+function rand!(cd::ConditionalDist{K, T}, dest::T; kwargs...) where {K, T}
     rand(Random.default_rng(), cd; kwargs...)
 end
 
@@ -52,8 +54,7 @@ end
 """
     rand(rng=default_rng(), cd::ConditionalDist; kwargs...)
 
-    Sample from a conditional distribution, given values of conditioning variables in 
-    `kwargs`.
+Sample from a conditional distribution, given values of conditioning variables in `kwargs`.
 
 Equivalent to cd(; kwargs...).
 """
@@ -216,11 +217,11 @@ function logpdf(cd::AnonymousDist, x; kwargs...)
     cd.logpdf(x; kwargs...)
 end
 
-function rand!(cd::AnonymousDist, dest; kwargs...)
+function rand!(cd::AnonymousDist{K, T}, dest::T; kwargs...) where {K, T}
     rand!(Random.default_rng(), cd, dest; kwargs...)
 end
 
-function rand!(rng::AbstractRNG, cd::AnonymousDist{K, T}, dest; kwargs...
+function rand!(rng::AbstractRNG, cd::AnonymousDist{K, T}, dest::T; kwargs...
 )::Union{T, Terminal} where {K, T}
     if ismissing(cd.rand!)
         rand(rng, cd; kwargs...)
@@ -266,4 +267,17 @@ end
 function Base.convert(::Type{ConditionalDist{K}}, s::Space{T}) where {K, T}
     f = () -> s
     UndefinedDist{K, T, typeof(f)}(f)
+end
+
+@generated function rand_ordered(
+    cd::Type{ConditionalDist{cond_vars, T}}, args...;
+    rng=default_rng()
+) where {cond_vars, T}
+
+    args_labeled = map(1:length(args)) do i
+        :($(cond_vars[i])=$(args[i]))
+    end
+    quote
+        rand(rng, cd; $(args_labeled...))
+    end
 end

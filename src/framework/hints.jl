@@ -14,13 +14,21 @@ struct PartiallyObservable <: Observability end
 
 
 # TODO: Technically this is weird because Multiagency{1 or 0} are possible
-#   Can fix this by reorganizing the type tree but not high concern
 abstract type Multiagency <: DecisionNetworkTrait end
 struct NoAgent <: Multiagency end
 struct SingleAgent <: Multiagency end
 abstract type MultiAgent <: Multiagency end
-struct Cooperative <: MultiAgent end
-struct Competitive <: MultiAgent end
+struct DefiniteAgents{N} <: MultiAgent end
+struct IndefiniteAgents <: MultiAgent end
+
+num_agents(::DefiniteAgents{N}) where {N} = N 
+num_agents(::SingleAgent) = 1
+num_agents(::NoAgent) = 0 
+
+
+abstract type Cooperation <: DecisionNetworkTrait end
+struct Cooperative <: Cooperation end
+struct Competitive <: Cooperation end
 
 abstract type MemoryPresence <: DecisionNetworkTrait end
 struct MemoryPresent <: MemoryPresence end
