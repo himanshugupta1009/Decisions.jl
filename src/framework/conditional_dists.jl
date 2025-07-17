@@ -166,7 +166,7 @@ macro ConditionalDist(sample_type, block)
     quote
         let
             $fn_block
-            AnonymousDist($conditionals_defd, $sample_type; $(fns_defd...))
+            AnonymousDist($conditionals_defd, $(esc(sample_type)); $(fns_defd...))
         end
     end
 end

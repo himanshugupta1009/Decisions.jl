@@ -44,12 +44,12 @@ function markov_constituents(node_names)
         o_i  = (:o,  :i),
         r_i  = (:r,  :i),
     )
-    partial_keys = intersect(node_names, keys(full_list))
+    partial_keys = Tuple(intersect(node_names, keys(full_list)))
     NamedTuple{partial_keys}(full_list)
 end
 
 function markov_ranges(t::MarkovConcreteTraits, node_names)
-    needs_i = [m_i; mp_i; s_i; sp_i; a_i; o_i; r_i]
+    needs_i = [:m_i; :mp_i; :s_i; :sp_i; :a_i; :o_i; :r_i]
     if ! isempty(intersect(node_names, needs_i))
         (; i = num_agents(t.N))
     else (;) end
@@ -75,9 +75,25 @@ function markov_type(t::MarkovTraits)
 end
 
 function markov_concretize_traits(traits::MarkovTraits, behavior, ranges)
-    M = (:mp ∈ keys(behavior)) ? MemoryPresent() : MemoryAbsent()
-    R = (:r  ∈ keys(behavior)) ? ConditionedOn(conditions(behavior[:r])...) : NoReward()
-    Z = (:o  ∈ keys(behavior)) ? PartiallyObservable() : FullyObservable()
+    M = if (:mp ∈ keys(behavior) || :m_i ∈ keys(behavior)) 
+        MemoryPresent() 
+    else 
+        MemoryAbsent()
+    end
+
+    R = if (:r  ∈ keys(behavior))
+        ConditionedOn(conditions(behavior[:r])...)
+    elseif (:r_i ∈ keys(behavior)) 
+        ConditionedOn(filter((s) -> s != :i, conditions(behavior[:r_i]))...)
+    else 
+        NoReward() 
+    end
+
+    Z = if (:o  ∈ keys(behavior) || :o_i ∈ keys(behavior)) 
+        PartiallyObservable() 
+    else 
+        FullyObservable()
+    end
 
     N = if :a_i ∈ keys(behavior)
         DefiniteAgents{ranges[:i]}()
@@ -128,7 +144,7 @@ end
 """
 _mkv_rwd(_, ::NoReward) = []
 _mkv_rwd(::Cooperative, ::ConditionedOn{nodes}) where nodes = [:r => nodes]
-_mkv_rwd(::Competitive, ::ConditionedOn{nodes}) where nodes = [:(r[i]) => nodes]
+_mkv_rwd(::Competitive, ::ConditionedOn{nodes}) where nodes = [:r_i => (nodes..., :i)]
 
 
 """
@@ -156,7 +172,7 @@ _mkv_act(::MultiAgent,::PartiallyObservable,::Decentralized,::MemoryPresent) = [
 """
 _mkv_obs(::FullyObservable, _) = []
 _mkv_obs(::PartiallyObservable, _)               = [:o       => (:s,)]
-_mkv_obs(::PartiallyObservable, ::Decentralized) = [:o_i     => (:s,)]
+_mkv_obs(::PartiallyObservable, ::Decentralized) = [:o_i     => (:i, :s)]
 
 
 # There are five possible memory configurations:
@@ -180,4 +196,4 @@ _mkv_mem(::MemoryPresent,::FullyObservable,    ::Decentralized) = [:mp_i => (:i,
 function _mkv_stt(::Multiagency) end
 _mkv_stt(::NoAgent)     = [:sp => (:s,)]
 _mkv_stt(::SingleAgent) = [:sp => (:s, :a)]
-_mkv_stt(::MultiAgent)  = [:sp => (:s, :a_i)]
+_mkv_stt(::MultiAgent)  = [:sp => (:s, :a)]

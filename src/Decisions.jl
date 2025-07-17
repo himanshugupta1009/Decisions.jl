@@ -26,6 +26,7 @@ export logpdf
 export fix
 export conditions
 
+include("framework/network_utils.jl")
 include("framework/networks.jl")
 export DecisionGraph
 export DecisionNetwork

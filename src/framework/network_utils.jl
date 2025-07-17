@@ -12,34 +12,35 @@ function _crawl_graph(graph, constituents, input, output)
     # inputs and the outputs. Also, want to do them in order.
     #
     # TODO: Is there a more efficient algorithm for this?
-    req_nodes = Symbol[]
-    inter_nodes = Symbol[output...]
 
-    node_reps = Dict()
+    plate_reps = Dict()
     for node in keys(graph)
         if node in keys(constituents)
-            node_reps[constituents[node][1]] = node
+            plate_reps[constituents[node][1]] = node
         end
-    end 
+    end
+
+    get_plate_reps(id) = (id ∈ keys(plate_reps) ? plate_reps[id] : id)
+    input = map(get_plate_reps, input)
+    output = map(get_plate_reps, output)
+
+    req_nodes = Symbol[]
+    inter_nodes = Symbol[output...]
 
     while ! isempty(inter_nodes)
         node = popfirst!(inter_nodes)
         plate = (node ∈ keys(constituents)) ? constituents[node][1] : node
-        if ! ((node ∈ input) || (plate ∈ input))
+        if ! ((node ∈ input) || (node ∈ req_nodes) || (plate ∈ input))
             push!(req_nodes, node)
-            try
-                for child in graph[node]
-                    prereq = if child in keys(constituents)
-                        node_reps[constituents[child][1]]
-                    elseif child in keys(node_reps)
-                        node_reps[child]
-                    else
-                        child
-                    end
-                    push!(inter_nodes, prereq)
+            for child in graph[node]
+                prereq = if child in keys(constituents)
+                    plate_reps[constituents[child][1]]
+                elseif child in keys(plate_reps)
+                    plate_reps[child]
+                else
+                    child
                 end
-            catch
-                throw(ArgumentError("Cannot infer value of node :$(node)"))
+                push!(inter_nodes, prereq)
             end
         end
     end
@@ -76,6 +77,30 @@ function _referant(id, constituents)
     else
         id
     end
+end
+
+"""
+    _get_plates(dn)
+
+Infer the names of all plates in `dn`.
+"""
+function _get_plates(dn)
+    dn_c = constituents(dn)
+    dn_s = structure(dn)
+    plates = Symbol[]
+    for node in keys(dn_s)
+        if node in keys(dn_c)
+            plate_id = dn_c[node][1]
+            if plate_id ∈ plates
+                continue 
+            else
+                push!(plates, plate_id)
+            end
+        else 
+            push!(plates, node)
+        end
+    end 
+    return Tuple(plates)
 end
 
 """

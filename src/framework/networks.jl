@@ -1,13 +1,17 @@
 
 """
-    DecisionGraph{structure, dynamism}
+    DecisionGraph{structure, dynamism, constituents, ranges}
 
 Representation of a directed, acyclic, possibly repeated graph that underlies a (dynamic)
 decision network.
 
-`structure` is a NamedTuple mapping nodes to their inputs (tuples of symbols). `dynamism` is
-a named tuple mapping nodes to their next-iteration counterparts to allow for infinitely
-repeated DAGs (which underlie _dynamic_ decision networks).
+`structure` is a NamedTuple mapping nodes to their inputs (tuples of symbols). Each node
+represents either a single random variable, or a plate of random variables. `dynamism` is a
+named tuple mapping nodes to their next-iteration counterparts to allow for infinitely
+repeated DAGs (which underlie _dynamic_ decision networks). `constituents` defines names for
+particular slices of plates, and is a named tuple mapping names to (plate_id, idx_id...)
+tuples. `ranges` is a named tuple that maps symbols representing indices into single-integer
+lengths of the corresponding axes.
 
 """
 struct DecisionGraph{structure, dynamism, constituents, ranges}
@@ -53,7 +57,8 @@ end
 
 
 """
-    DecisionNetwork{dn::DecisionGraph{structure, dynamism}} where {structure, dynamism}
+    DecisionNetwork{dn::DecisionGraph{structure, dynamism, constituents, ranges}} 
+    where {structure, dynamism, constituents, ranges}
 
 Representation of a decision network based on an underlying directed acyclic graph.
 
@@ -66,6 +71,8 @@ be defined as nodes in the structure; those that are not are interpreted as inpu
 If `dynamism` is a non-empty named tuple, a _dynamic_ decision network is specified.
 `dynamism` maps node names to their next-step counterparts and vice versa (for instance,
 `:s` <=> `:sp` in an MDP.) In this case, `structure` gives the DN for a single step.
+
+`constituents` and `ranges` are used to specify plates. See [DecisionGraph](@ref).
 
 A concrete decision problem provides the conditional distributions for any of the nodes (or
 none of them) in the named tuple `behavior`. Nodes not in `behavior` have distributions
@@ -272,7 +279,7 @@ function simulate(
     output::Union{Tuple{Vararg{Symbol}}, Symbol, Nothing}=nothing)
 
     dnout = if isnothing(output)
-        DNOut{keys(structure(problem))}()
+        DNOut{_get_plates(problem)}()
     else
         DNOut{output}()
     end
@@ -342,13 +349,15 @@ end
         fn(output) && return output
     end)
 
-    quote
+    q = quote
         $zeroeth_pass_block
         $first_pass_block
         while true
             $second_pass_block
         end
     end
+    println(q)
+    q
 end
 
 """

@@ -31,4 +31,7 @@ const __H = Cooperative() # default
 @markov_alias HMM     MarkovTraits(_0A, _PO, __C, __M, _SR, __H)
 @markov_alias MDP     MarkovTraits(_1A, _FO, __C, __M, _AR, __H)
 @markov_alias POMDP   MarkovTraits(_1A, _PO, __C, __M, _AR, __H)
-@markov_alias CoMDP   MarkovTraits(_NA, _FO, __C, __M, _AR, __H)
+
+@markov_alias CoMDP   MarkovTraits(_NA, _FO, _CC, __M, _AR, _YH)
+@markov_alias DecMDP  MarkovTraits(_NA, _FO, _DC, __M, _AR, _YH)
+@markov_alias MG      MarkovTraits(_NA, _FO, _DC, __M, _AR, _NH)
