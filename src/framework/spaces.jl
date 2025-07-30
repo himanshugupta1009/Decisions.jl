@@ -2,23 +2,8 @@
 """
     abstract type Space{T}
 
-Abstract base representation for spaces within type `T`.
-
-Spaces represent (possibly infinite) sets of instances of type `T`. 
-
-# Mandatory functions 
-- `Base.in(el, s::Space)`: Give whether item `el` is in space `s`.
-
-# Optional functions
-
-- `Base.zero(::space)`: Provide the additive identity element, assuming `+`` is defined
-  over the space.
-- `Base.one(::space)`: Provide the multiplicative identity element, assuming `*` is defined
-  over the space.
-- `Base.length(::Space)`: Give the cardinality of a space, if it is finite. Otherwise (and
-  by default), return `Inf`. 
-- `Base.iterate(::Space [, state])`: For a discrete state, provide iteration support (see
-  (Iteration)[https://docs.julialang.org/en/v1/manual/interfaces/#man-interface-iteration])
+Abstract base representation for spaces, possibly infinite sets of instances all backed by
+type `T`.
 """
 abstract type Space{T} end
 

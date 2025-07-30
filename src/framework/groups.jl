@@ -32,12 +32,16 @@ Give an indexing expression for a group of random variables that specifies singl
 in the group.
 """
 function expr(::RVGroup{id, idx_vars}) where {id, idx_vars}
-    idxs_with_colon = map(idx_vars) do idx
-        # interestingly I think this statement uses colon in every possible way:
-        #   literal symbol, literal expression, Colon(), separator in ternary operator
-        (idx == :_) ? :(:) : idx
+    if length(idx_vars) == 0
+        id
+    else
+        idxs_with_colon = map(idx_vars) do idx
+            # interestingly I think this statement uses colon in every possible way:
+            #   literal symbol, literal expression, Colon(), separator in ternary operator
+            (idx == :_) ? :(:) : idx
+        end
+        :($id[$(idxs_with_colon...)])
     end
-    :($id[$(idxs_with_colon...)])
 end
 
 
@@ -54,7 +58,7 @@ abstract type Plate{id, idxs, hints} <: RVGroup{id, idxs} end
 
 
 function Terminality(::Plate{id, idxs, hints}) where {id, idxs, hints} 
-    if ! has_key(hints[:is_terminable]) 
+    if :is_terminable ∉ keys(hints) 
         MaybeTerminable()
     elseif hints[:is_terminable]
         Terminable() 
@@ -69,8 +73,8 @@ end
 A group of random variables that are all (conditionally) independent.
 """
 struct Indep{id, idxs, hints} <: Plate{id, idxs, hints}
-    Indep(id, idxs; hints=false) = new{id, _sorted_tuple(idxs), hints}()
-    Indep(id, idxs...; hints=false) = new{id, _sorted_tuple(idxs), hints}()
+    Indep(id, idxs; hints...) = new{id, _sorted_tuple(idxs), NamedTuple(hints)}()
+    Indep(id, idxs...; hints...) = new{id, _sorted_tuple(idxs), NamedTuple(hints)}()
 end
 
 
@@ -81,8 +85,8 @@ A group of random variables that are jointly related to each other (that is, are
 independent).
 """
 struct Joint{id, idxs, hints} <: Plate{id, idxs, hints}
-    Joint(id, idxs; hints=false) = new{id, _sorted_tuple(idxs), hints}()
-    Joint(id, idxs...; hints=false) = new{id, _sorted_tuple(idxs), hints}()
+    Joint(id, idxs; hints...) = new{id, _sorted_tuple(idxs), NamedTuple(hints)}()
+    Joint(id, idxs...; hints...) = new{id, _sorted_tuple(idxs), NamedTuple(hints)}()
 end
 
 
@@ -129,8 +133,6 @@ condition.
 struct Dense{id} <: ConditioningGroup{id, ()}
     Dense(id) = new{id}()
 end
-
-expr(::Dense{id}) where {id} = id
 
 
 Base.convert(::Type{ConditioningGroup}, s::Symbol) = Dense(s)

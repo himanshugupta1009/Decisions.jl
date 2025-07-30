@@ -29,7 +29,7 @@ end
 """
     conditions(cd::ConditionalDist)
 
-Report the names of the conditioning variables of cd as a tuple of Symbols.
+Report the names of the conditioning variables of `cd` as a tuple of Symbols.
 """
 conditions(::ConditionalDist{K, T}) where {K, T} = K
 
@@ -90,7 +90,8 @@ Gives the natural logarithm of the probability or probability density of a rando
 distributed according to `cd` with the value `x`, given values of conditioning variables in
 `kwargs`.
 """
-function logpdf end
+logpdf(cd::ConditionalDist, x; kwargs...) = exp(pdf(cd, x; kwargs...))
+logpdf(rng, cd::ConditionalDist, x; kwargs...) = exp(pdf(rng, cd, x; kwargs...))
 
 
 """
@@ -123,6 +124,19 @@ function (cd::ConditionalDist)(x; kwargs...)::Float64
     pdf(cd, x; kwargs...)
 end    
 
+
+"""
+    @ConditionalDist
+
+Generate an anonymous conditional distribution definition from a set of functions.
+
+The functions can be any of those in the ConditionalDist interface and must be named
+accordingly, with the ::ConditionalDist argument omitted. They can be defined with the
+`function` keyword or in the compact style. The names of conditioning variables are
+automatically inferred from the names of keyword arguments.
+
+The `rng` argument is mandatory in functions that use it.
+"""
 macro ConditionalDist(sample_type, block)
 
     fns = filter(block.args) do q
@@ -171,7 +185,14 @@ macro ConditionalDist(sample_type, block)
     end
 end
 
+"""
+    AnonymousDist
 
+An anonymous distribution: one defined with @ConditionalDist. 
+
+It carries its implementation as higher order functions, so every `AnonymousDist` has a unique
+type (not unlike anonymous functions).
+"""
 struct AnonymousDist{K, T, 
         SupportFn <: Union{Function, Missing}, 
         RandFn <: Union{Function, Missing},
@@ -247,7 +268,11 @@ function support(cd::AnonymousDist{K, T}; kwargs...
     end
 end
 
+"""
+    UndefinedDist
 
+A distribution that has no PDF or sampling defined - only its support is known.
+"""
 struct UndefinedDist{K, T, F<:Function} <: ConditionalDist{K, T}
     support::F
 end
@@ -267,17 +292,4 @@ end
 function Base.convert(::Type{ConditionalDist{K}}, s::Space{T}) where {K, T}
     f = () -> s
     UndefinedDist{K, T, typeof(f)}(f)
-end
-
-@generated function rand_ordered(
-    cd::Type{ConditionalDist{cond_vars, T}}, args...;
-    rng=default_rng()
-) where {cond_vars, T}
-
-    args_labeled = map(1:length(args)) do i
-        :($(cond_vars[i])=$(args[i]))
-    end
-    quote
-        rand(rng, cd; $(args_labeled...))
-    end
 end

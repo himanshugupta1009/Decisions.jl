@@ -94,7 +94,7 @@ node_names(dn::DecisionNetwork) = keys(nodes(dn))
     conditions(dn::Type{<:DecisionNetwork}, s::Symbol)
     conditions(dn::DecisionNetwork, s::Symbol)
 
-Give the names of the conditioning variables of `s` in `dn` (possibly including indexing
+Give the names of the conditioning variables of `s` in `dn` (including any indexing
 variables).
 """
 function conditions(dn::Type{<:DecisionNetwork}, s::Symbol) 
@@ -208,7 +208,7 @@ end
     nodes_in_order = _crawl_dn(dn, rvs_in, rvs_out)
 
 
-    # <<<
+    
     # Zeroeth pass: Inputs
     zeroeth_pass_block = quote 
         dists = merge(dn.behavior, decisions) 
@@ -217,12 +217,17 @@ end
         sym = Meta.quot(rv)
         push!(zeroeth_pass_block.args, :($rv = input[$sym]))
     end
-    append!(zeroeth_pass_block.args,_get_plate_defs(dn))
+    for rv in node_names(dn)
+        init_stmt = _make_node_initialization(dn, rv)
+        if ! isnothing(init_stmt)
+            push!(zeroeth_pass_block.args, init_stmt)
+        end
+    end
 
     # First pass: intitial defs; can't use rand!
     first_pass_block = quote end
     for rv in nodes_in_order
-        push!(first_pass_block.args, _make_update_step(rv, dn))
+        push!(first_pass_block.args, _make_node_assignment(dn, rv))
     end
     for (node, node_prime) in pairs(dynamic_pairs(dn))
         if node_prime in nodes_in_order
@@ -245,11 +250,11 @@ end
     # Second and further pass: rand! available
     second_pass_block = quote end
     for rv in nodes_in_order
-        push!(second_pass_block.args, _make_update_step(rv, dn; in_place=true))
+        push!(second_pass_block.args, _make_node_assignment(dn, rv; in_place=true))
     end
     for (node, node_prime) in pairs(dynamic_pairs(dn))
         if node_prime in nodes_in_order
-            push!(first_pass_block.args, :($node = $node_prime))
+            push!(second_pass_block.args, :($node = $node_prime))
         end
     end
     push!(second_pass_block.args, quote
@@ -257,15 +262,13 @@ end
         fn(output) && return output
     end)
 
-    q = quote
+    quote
         $zeroeth_pass_block
         $first_pass_block
         while true
             $second_pass_block
         end
     end
-    println(q)
-    q
 end
 
 """

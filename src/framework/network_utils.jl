@@ -11,6 +11,7 @@ Give a tuple containing the elements in v, sorted according to `sort`.
 Useful for imposing a structure on a Tuple used as a type parameter.
 """
 _sorted_tuple(t) = Tuple(sort(collect(t)))
+_sorted_tuple(t::Symbol) = (t,)
 
 """
     _sortkeys(::NamedTuple)
@@ -59,10 +60,13 @@ known, in order.
 function _crawl_dn(dn, ids_in, ids_out)
     # We don't want to evaluate any plates we don't have to: only the ones between the
     # inputs and the outputs.
-    input = [Set([ids_in...; keys(dn_ranges)...])...]  
-    output = [Set([ids_out...; dn_dynamism[input]...])...]
+    dynamic_inputs = [k for k in keys(dynamic_pairs(dn)) if k ∈ ids_in]
+
+    input = [Set([ids_in...; keys(ranges(dn))...])...]  
+    output = [Set([ids_out...; dynamic_pairs(dn)[dynamic_inputs]...])...]
 
     inter_nodes = Symbol[output...]
+    req_nodes = Symbol[]
 
     while ! isempty(inter_nodes)
         node = popfirst!(inter_nodes)
@@ -111,7 +115,7 @@ function _make_node_initialization(dn, id)
 
     isempty(indices(output_def)) && return nothing  # don't wrap non-arrays
     dims = map(indices(output_def)) do idx
-        plates(dn)[idx]
+        ranges(dn)[idx]
     end
 
     :(
@@ -129,16 +133,16 @@ end
 
 Generate an `Expr` that updates random variable `id` based on decision network `dn`.
 """
-function make_node_assignment(dn, id; in_place=false)
-    inputs_def = nodedefs(dn)[id][1]
-    output_def = nodedefs(dn)[id][2]
+function _make_node_assignment(dn, id; in_place=false)
+    inputs_def = nodes(dn)[id][1]
+    output_def = nodes(dn)[id][2]
 
     # Generate the keywords arguments specifying the input of the node
     kws_rvs = map(inputs_def) do input
         Expr(:kw, name(input), expr(input))
     end
 
-    kws_rvs = map(indices(output_def)) do idx_var
+    kws_idxs = map(indices(output_def)) do idx_var
         Expr(:kw, idx_var, idx_var)
     end
     
@@ -155,24 +159,24 @@ function make_node_assignment(dn, id; in_place=false)
     # Generate the block that actually assigns the R.V. to have the sampled value,
     #   and checks it for terminality.
     #   If we have the NotTerminable hint we can skip the check.
-    assgn_block = if Terminality(nodedefs[id][1]) == NotTerminable()
+    assgn_block = if Terminality(nodes(dn)[id][2]) == NotTerminable()
         quote
-            $(expr(id)) = $call
+            $(expr(output_def)) = $call
         end
     else
         tmp_id = gensym()
         quote
             $tmp_id = $call
             isterminal($tmp_id) && return
-            $(expr(id)) = $tmp_id
+            $(expr(output_def)) = $tmp_id
         end
     end
 
     # Generate a loop around that block over the indices, if there are any
-    if length(indices(outputs_def)) > 0
+    if length(indices(output_def)) > 0
         loop_idxs = map(indices(output_def)) do idx_var
             n = ranges(dn)[idx_var]
-            :(1:$n)
+            :($idx_var=1:$n)
         end
         Expr(:for, Expr(:block, reverse(loop_idxs)...), assgn_block)
     else

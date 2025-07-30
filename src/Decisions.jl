@@ -6,6 +6,65 @@ using Random
 using ExprTools
 using StaticArrays
 
+include("framework/hints.jl")
+export DecisionsTrait
+export Sequentiality
+export Sequential
+export Simultaneous
+
+export Observability
+export FullyObservable
+export PartiallyObservable
+
+export Multiagency
+export NoAgent
+export SingleAgent
+export MultiAgent
+export DefiniteAgents
+export IndefiniteAgents
+
+export Cooperation
+export Cooperative
+export Competitive
+export Individual
+
+export MemoryPresence
+export MemoryPresent
+export MemoryAbsent
+
+export RewardStyle
+export SingleReward
+export DefiniteRewards
+export IndefiniteRewards
+export NoReward
+
+export Centralization
+export Centralized
+export Decentralized
+
+export Statefulness
+export Stateful
+export Stateless
+export AgentFactored
+
+export TimestepStyle
+export SemiMarkov
+export FixedTimestep
+
+export AgentCorrelation
+export Correlated
+export Uncorrelated
+
+include("framework/groups.jl")
+export Indep
+export JointAndIndep
+export Joint
+export Parallel
+export Dense
+
+export name
+export indices
+
 include("framework/spaces.jl")
 export Space
 export FiniteSpace
@@ -27,20 +86,20 @@ export fix
 export conditions
 
 include("framework/network_utils.jl")
+include("framework/validity.jl")
 include("framework/networks.jl")
 export DecisionGraph
 export DecisionNetwork
-export structure
-export dynamism
+export nodes
+export dynamic_pairs
 export sample
-export simulate
 export next
 export prev
 export graph
 export Terminal
 
 include("framework/algorithms.jl")
-export DecisionAlgorithm
+export DecisionAgent
 
 
 include("framework/objectives.jl")
@@ -48,40 +107,6 @@ export DecisionObjective
 
 include("framework/settings.jl")
 export OfflineSetting
-
-
-include("framework/hints.jl")
-export DecisionNetworkTrait
-export Sequentiality
-export Sequential
-export Simultaneous
-
-export Observability
-export FullyObservable
-export PartiallyObservable
-
-export Multiagency
-export NoAgent
-export SingleAgent
-export MultiAgent
-export DefiniteAgents
-export IndefiniteAgents
-
-export Cooperation
-export Cooperative
-export Competitive
-
-export MemoryPresence
-export MemoryPresent
-export MemoryAbsent
-
-export RewardConditioning
-export ConditionedOn
-export NoReward
-
-export Centralization
-export Centralized
-export Decentralized
 
 include("framework/transformations.jl")
 export Collapse

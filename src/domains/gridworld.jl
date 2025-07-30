@@ -1,3 +1,5 @@
+using Decisions
+
 struct GridPointSpace <: Space{Tuple{Int, Int}}
     nrows::Int
     ncols::Int
@@ -91,9 +93,8 @@ function Iceworld(; p_slip, nrows, ncols, holes, target)
             end
         end
     end
-    println(conditions(reward))
 
-    MDP(;
+    Decisions.MDP_DN(;
         sp=transition,
         r=reward,
         a=FiniteSpace([NORTH, SOUTH, EAST, WEST])
@@ -102,7 +103,7 @@ end
 
 mdp = Iceworld(; p_slip=0.3, nrows=10, ncols=10, holes=(), target=(10, 10))
 
-π = @ConditionalDist Tuple{Int, Int} begin
+π = @ConditionalDist Cardinal begin
     function rand(rng; s, m)
         rand(rng, [NORTH, SOUTH, EAST, WEST])
     end
@@ -112,7 +113,7 @@ end
     rand(rng; m, s, a) = nothing
 end
 
-simulate(mdp, (; a=π, mp=μ), (; s=(1, 1), m=nothing)) do output
+sample(mdp, (; a=π, mp=μ), (; s=(1, 1))) do output
     println(output)
     false
 end

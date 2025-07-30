@@ -1,13 +1,13 @@
+using Decisions
+
 @enum PrisonerChoice SILENT BETRAY
-
-
+const ChoicePair = Tuple{PrisonerChoice, PrisonerChoice}
 function IteratedPrisoners()
-    transition = @ConditionalDist Tuple{PrisonerChoice, PrisonerChoice} begin
+    transition = @ConditionalDist ChoicePair begin
         function rand(rng; s, a)
             Tuple(a)
         end
     end
-
     reward = @ConditionalDist Float64 begin
         function rand(rng; s, i, a, sp)
             if sp == (SILENT, SILENT)
@@ -21,24 +21,18 @@ function IteratedPrisoners()
             end
         end
     end
-
-    MG((; i=2);
-        sp=transition,
-        r_i=reward,
-        a_i=FiniteSpace([SILENT, BETRAY])
-    )
+    Decisions.MG_DN((; i=2); sp=transition, r=reward, 
+        a=FiniteSpace([SILENT, BETRAY]))
 end
-
-a_i = @ConditionalDist PrisonerChoice begin
+action = @ConditionalDist PrisonerChoice begin
     function rand(rng; s, i)
         rand([SILENT, BETRAY])
     end
 end
-
-behavior = (; a_i)
+behavior = (; a=action)
 
 mg = IteratedPrisoners()
-simulate(mg, behavior, (; s=(SILENT, SILENT))) do output
+sample(mg, behavior, (; s=(SILENT, SILENT))) do output
     println(output)
     return (output[:a][1] == BETRAY) && (output[:a][2] == BETRAY)
-end
+end 
