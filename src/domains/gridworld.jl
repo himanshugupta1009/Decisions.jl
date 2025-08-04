@@ -1,4 +1,5 @@
 using Decisions
+using StatsBase
 
 struct GridPointSpace <: Space{Tuple{Int, Int}}
     nrows::Int
@@ -101,19 +102,29 @@ function Iceworld(; p_slip, nrows, ncols, holes, target)
     )
 end
 
-mdp = Iceworld(; p_slip=0.3, nrows=10, ncols=10, holes=(), target=(10, 10))
+mdp = Iceworld(; p_slip=0.3, nrows=5, ncols=5, holes=(), target=(5, 5))
 
-π = @ConditionalDist Cardinal begin
-    function rand(rng; s, m)
-        rand(rng, [NORTH, SOUTH, EAST, WEST])
+
+
+struct MyGridworldAgent <: DecisionAgent
+    model::DecisionNetwork
+end
+
+function Decisions.behavior(::MyGridworldAgent, params)
+    a = @ConditionalDist Cardinal begin
+        rand(rng; s) = StatsBase.sample([keys(params)...], Weights([values(params)...]))
     end
+    (; a)
 end
 
-μ = @ConditionalDist Nothing begin
-    rand(rng; m, s, a) = nothing
+function Decisions.init_parameters(::MyGridworldAgent, hparams=nothing)
+    Dict(NORTH=>2.0, SOUTH=>1.0, EAST=>1.0, WEST=>2.0)
 end
 
-sample(mdp, (; a=π, mp=μ), (; s=(1, 1))) do output
-    println(output)
-    false
+function Decisions.update_parameters(::MyGridworldAgent, params, data, hparams=nothing)
+    params[NORTH] *= 0.99
+    params[SOUTH] *= 1.01
+    params[EAST]  *= 1.01
+    params[WEST]  *= 0.99
+    params
 end

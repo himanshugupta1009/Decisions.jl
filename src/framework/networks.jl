@@ -5,7 +5,7 @@
 Representation of a decision network based on an underlying directed acyclic graph.
 """
 struct DecisionNetwork{nodes, dynamic_pairs, ranges, B<:NamedTuple}
-    behavior::B
+    implementation::B
 
     function DecisionNetwork{N, D, R}(; impls...) where {N, D, R}
         _check_dn_typespace(DecisionNetwork{N, D, R})
@@ -37,6 +37,31 @@ function DecisionNetwork(nodes, dynamic_pairs=(;), ranges=(;); impls...)
     DecisionNetwork{N_standard, D_standard, R_standard}(impls...)
 end
 
+function Base.show(io::IO, z::DecisionNetwork)
+    names = [node_names(z)...; keys(dynamic_pairs(z))...; keys(ranges(z))...]
+    name_algn = maximum(length.(string.(names)))
+    print(io, "DecisionNetwork:")
+    for (a, b) in pairs(nodes(z))
+        padding = repeat(" ", name_algn - length(string(a)))
+        dist_type = if (a ∈ keys(implementation(z)))
+            Base.typename(typeof(z[a])).wrapper
+        else
+            "no impl"
+        end
+        print(io, "\n ", expr(b[2]), padding, " | ", join(string.(expr.(b[1])), ", "), 
+            "  (", dist_type, ")")
+        
+    end
+    for (a, b) in pairs(dynamic_pairs(z))
+        padding = repeat(" ", name_algn - length(string(b)))
+        print(io, "\n ", b, padding, " => ", a)
+    end
+    for (a, b) in pairs(ranges(z))
+        padding = repeat(" ", name_algn - length(string(a)))
+        print(io, "\n  ", a, padding, " ∈ ", "1:", b)
+    end
+end
+
 
 """
     nodes(::Type{<:DecisionNetwork})
@@ -63,21 +88,21 @@ dynamic_pairs(::Type{<:DecisionNetwork{N, D}}) where {N, D} = D
     ranges(::Type{<:DecisionNetwork})
     ranges(::DecisionNetwork)
     
-Give a NamedTuple defining the ranges over which groups in a decision network are defined:
-each key is a name of an indexing variables, and each value is the group size along that
-axis.
+Give a NamedTuple defining the ranges over which plates in a decision network are defined:
+each key is a name of an indexing variables, and each value is the plate size along that
+index.
 """
 ranges(::DecisionNetwork{N, D, R}) where {N, D, R} = R
 ranges(::Type{<:DecisionNetwork{N, D, R}}) where {N, D, R} = R
 
 
 """
-    behavior(::DecisionNetwork)
+    implementation(dn::DecisionNetwork)
     
 Give the conditional distributions implementing the nodes of a decision network as a
 NamedTuple mapping node names to distributions.
 """
-behavior(dn::DecisionNetwork) = dn.behavior
+implementation(dn::DecisionNetwork) = dn.implementation
 
 
 """
@@ -110,7 +135,7 @@ function conditions(dn::DecisionNetwork, s::Symbol)
 end
 
 
-Base.getindex(dp::DecisionNetwork, rv::Symbol) = behavior(dp)[rv]
+Base.getindex(dp::DecisionNetwork, rv::Symbol) = implementation(dp)[rv]
 
 Base.keys(dp::DecisionNetwork) = keys(nodes(dp))
 Base.keys(dp::Type{<:DecisionNetwork}) = keys(nodes(dp))
@@ -134,8 +159,8 @@ Give the next-step counterpart of `node` in a [type of] decision network `dn`.
 `dn` must be a dynamic decision network.
 
 # Examples
-```jldoctest
-julia> next(MDP, :s)
+```jldoctest 
+julia> next(MDP_DN, :s)
 :sp
 ```
 """
@@ -153,7 +178,7 @@ Give the previous-step counterpart of `node` in a [type of] decision network `dn
 
 # Examples
 ```jldoctest
-julia> prev(MDP, :sp)
+julia> prev(MDP_DN, :sp)
 :s
 ```
 """
@@ -165,7 +190,7 @@ prev(dn::Type{<:DecisionNetwork}, rv::Symbol) = findfirst((i) -> i==rv, dynamic_
     sample(fn = (_) -> false, dn::DecisionNetwork [, decisions::NamedTuple, input::NamedTuple, output::Tuple])
 
 Sample nodes or plates `out` in decision network `dn` based on input values `in` and node
-implementations provided by `decisions` and `dn.behavior`. `fn`, if present, executes upon
+implementations provided by `decisions` and `dn.implementation`. `fn`, if present, executes upon
 each iteration of a (dynamic) network on a NamedTuple mapping the names `out` to their
 values, and stops when `fn` returns true.
 
@@ -173,8 +198,8 @@ Returns `Terminal()` if a terminal condition is reached. Otherwise, returns a Na
 mapping the names `out` to their values after the last (or only) iteration. 
 
 Only ancestors of `out`, up to (but not including) the nodes in `in`, are sampled. If any of
-the sampled nodes are not implemented by either `dn.behavior` or `decisions`, an error is
-thrown. If _both_ `dn.behavior` and `decisions` specify the same node, the implementation in
+the sampled nodes are not implemented by either `dn.implementation` or `decisions`, an error is
+thrown. If _both_ `dn.implementation` and `decisions` specify the same node, the implementation in
 `decisions` is preferred.
 """
 function sample(
@@ -211,7 +236,7 @@ end
     
     # Zeroeth pass: Inputs
     zeroeth_pass_block = quote 
-        dists = merge(dn.behavior, decisions) 
+        dists = merge(dn.implementation, decisions) 
     end
     for rv in rvs_in
         sym = Meta.quot(rv)
@@ -270,28 +295,3 @@ end
         end
     end
 end
-
-"""
-    struct Terminal end
-    
-Type of the unique value representing the output of a decision node as being terminal or
-otherwise exceptional. 
-"""
-struct Terminal end
-
-"""
-    terminal
-
-Unique value representing the output of a decision node as being terminal or
-otherwise exceptional. The singleton instance of type `Terminal`.
-"""
-const terminal = Terminal()
-
-"""
-    isterminal(x)
-
-Return `true` if and only if `x === terminal`, and `false` otherwise, in the style of
-`isnothing`.
-"""
-isterminal(::Terminal) = true
-isterminal(::Any) = false

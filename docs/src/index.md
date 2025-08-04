@@ -1,30 +1,44 @@
 
 # Decisions.jl
 ## What is Decisions.jl?
-`Decisions.jl` provides representations of decision problems - like Markov decision processes, Markov games, and many others - as decision networks.
+Decisions.jl is an ecosystem for canonical representations of decision problems. Using
+decision networks as the fundamental underlying structure, Decisions.jl provides an explicit
+interface for a rich set of decision problems: from the most basic Markov decision
+processes, to rich and expressive multi-agent, semi-Markov, multi-objective extensions, to
+complex problems unifying decision-, control-, and game-theoretic models.
 
-`Decisions.jl` aspires to be:
-* **Definitive**. Every decision problem and decision-making setting has a clear definition.
-  It's easy to check exactly what problems are supported by a particular solver or compare
-  algorithms on even footing.
-* **Modular**. Decision networks can be transformed, composed, stacked, and meta-referenced,
-  allowing users to create highly expressive problems from a few familiar primitives. 
-* **Fast**. Almost all of the overhead computation `Decisions.jl` uses to handle general
-  decision problems is compile-time. Once compiled, any type of decision network can be
-  efficiently used and sampled.
+Decisions.jl is factored into multiple packages:
 
-`Decisions.jl` is a work in progress. Please report issues and feature requests [on Github](https://github.com/JuliaDecisionMaking/Decisions.jl/issues).
+* [**`DecisionNetworks.jl`**](@ref) (closed beta) provides fundamental tools for the ecosystem: representations
+  for decision networks, conditional distributions, support spaces, and visualizations.
+* [**`DecisionProblems.jl`**](@ref) (closed alpha) introduces objectives over decision networks and
+  formal definitions of decision problems.
+* [**`DecisionSettings.jl`**](@ref) (closed alpha) introduces real-world decision making scenarios,
+  surgically defining concepts of agents, training loops, and environment interactions to
+  permit truly exact comparisons between algorithms.
+
+Decisions.jl is a work in progress. Please report issues and feature requests [on Github](https://github.com/JuliaDecisionMaking/Decisions.jl/issues).
+
+## Objectives
+
+Decisions.jl is designed to be, in this order:
+* **Definitive**. Decision problems have precise mathematical definitions which are
+  respected by Decisions.jl. It's easy to understand the exact specification of a given
+  problem and compare algorithms on even footing.
+* **Modular**. Decision networks can be transformed, composed, stacked, and modified to
+  create rich, expressive models. Algorithms designed for specific decision problems can be
+  easily applied to extensions or simplifications of those problems. 
+* **Fast**. Almost all of the overhead computation Decisions.jl uses to handle general
+  decision networks is compile-time. Once compiled, all decision problems are first class,
+  as efficiently used and sampled as any other.
 
 ## Contents
 ```@contents
 Pages = [
-    <!-- "install.md",
-    "quickstart.md",
-    "defining_problems.md",
-    "defining_algorithms.md",
-    "defining_objectives.md",
-    "valid.md",
-    "simulators.md", -->
+    "networks/dns.md"
+    "networks/conditional_dists.md"
+    "networks/spaces.md"
+    "networks/traits.md"
 ]
 Depth = 2
 ```

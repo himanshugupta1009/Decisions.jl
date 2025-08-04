@@ -1,5 +1,3 @@
-
-
 abstract type DNTransformation end
 
 struct Collapse{nodes} <: DNTransformation end

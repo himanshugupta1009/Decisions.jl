@@ -8,6 +8,16 @@ a random variable of type `T`.
 abstract type ConditionalDist{K, T} end
 
 
+function Base.show(io::IO, z::ConditionalDist{K, T}) where {K, T}
+    print(io, Base.typename(typeof(z)).wrapper, " ", "P(::", T, " | ", join(K, ", "), ")")
+end
+
+"""
+    Base.eltype(::ConditionalDist{K, T}) where {K, T}
+
+When applied to a ConditionalDist, give `T`, the type of values produced by the
+distribution.
+"""
 Base.eltype(::ConditionalDist{K, T}) where {K, T} = T
 
 """
@@ -43,10 +53,10 @@ conditioning variables taking on the values in `kwargs`.
 Returns `dest` if in-place modification is successful; otherwise, returns a new instance.
 By default, never modifies in place and defers to `rand`.
 """
-function rand!(rng::AbstractRNG, cd::ConditionalDist{K, T}, dest::T; kwargs...) where {K, T}
+function Random.rand!(rng::AbstractRNG, cd::ConditionalDist{K, T}, dest::T; kwargs...) where {K, T}
     rand(rng, cd; kwargs...)
 end
-function rand!(cd::ConditionalDist{K, T}, dest::T; kwargs...) where {K, T}
+function Random.rand!(cd::ConditionalDist{K, T}, dest::T; kwargs...) where {K, T}
     rand(Random.default_rng(), cd; kwargs...)
 end
 
@@ -58,7 +68,7 @@ Sample from a conditional distribution, given values of conditioning variables i
 
 Equivalent to cd(; kwargs...).
 """
-Base.rand
+Random.rand(cd::ConditionalDist; kwargs...) = Random.rand(default_rng(), cd; kwargs...)
 
 
 """
@@ -72,7 +82,6 @@ function fix end
 
 """
     pdf(cd::ConditionalDist, x; kwargs...)
-    pdf(rng, cd::ConditionalDist, x; kwargs...)
 
 Gives the probability or probability density of a random variable distributed according to
 `cd` with the value `x`, given values of conditioning variables in `kwargs`.
@@ -84,14 +93,12 @@ function pdf end
 
 """
     logpdf(cd::ConditionalDist, x; kwargs...)
-    logpdf(rng, cd::ConditionalDist, x; kwargs...)
 
-Gives the natural logarithm of the probability or probability density of a random variable
-distributed according to `cd` with the value `x`, given values of conditioning variables in
-`kwargs`.
+Gives the natural logarithm of the probability or probability density of the random variable
+distributed according to `cd` having the value `x`, given values of conditioning variables
+in `kwargs`.
 """
 logpdf(cd::ConditionalDist, x; kwargs...) = exp(pdf(cd, x; kwargs...))
-logpdf(rng, cd::ConditionalDist, x; kwargs...) = exp(pdf(rng, cd, x; kwargs...))
 
 
 """
@@ -107,7 +114,7 @@ notation; i.e., with distribution `Q`, `Q(; a=1, b=2)` is analogous to ``x \\sim
 function (cd::ConditionalDist{K, T})(
     ; rng=Random.default_rng(), kwargs...
 )::Union{T, Terminal} where {K, T}
-    rand(rng, cd; kwargs...,)
+    Random.rand(rng, cd; kwargs...,)
 end
 
 """
@@ -220,12 +227,12 @@ struct AnonymousDist{K, T,
     end
 end
 
-function Base.rand(rng::AbstractRNG, cd::AnonymousDist{K, T}; kwargs...
+function Random.rand(rng::AbstractRNG, cd::AnonymousDist{K, T}; kwargs...
 )::Union{T, Terminal} where {K, T}
     cd.rand(rng; kwargs...)
 end
 
-function Base.rand(cd::AnonymousDist{K, T}; kwargs...
+function Random.rand(cd::AnonymousDist{K, T}; kwargs...
 )::Union{T, Terminal} where {K, T}
     cd.rand(Random.default_rng(); kwargs...)
 end
@@ -271,7 +278,7 @@ end
 """
     UndefinedDist
 
-A distribution that has no PDF or sampling defined - only its support is known.
+A distribution that has no PDF or sampling defined. Only its support is known.
 """
 struct UndefinedDist{K, T, F<:Function} <: ConditionalDist{K, T}
     support::F
@@ -280,8 +287,9 @@ end
 support(cd::UndefinedDist; kwargs...) = cd.support(; kwargs...)
 
 
-function Base.convert(::Type{ConditionalDist{K, T}}, f::Function) where {K, T}
-    AnonymousDist(K, T; rand = f)
+function Base.convert(::Type{ConditionalDist{K}}, f::F) where {K, F<:Function}
+    # TODO: Can't infer output type from `f` so this is horribly type instable
+    AnonymousDist(K, Any; rand = f)
 end
 
 function Base.convert(::Type{ConditionalDist{K, T}}, s::Space{<:T}) where {K, T}
@@ -293,3 +301,89 @@ function Base.convert(::Type{ConditionalDist{K}}, s::Space{T}) where {K, T}
     f = () -> s
     UndefinedDist{K, T, typeof(f)}(f)
 end
+
+function Base.convert(::Type{Union{Terminal, A}}, x) where {A}
+    Base.convert(A, x)
+end
+
+
+"""
+    CompoundDist{K, T, Ki} <: ConditionalDist{K, T}
+
+A distribution which implements P(⋅ | idx, ...) using a `Tuple` of P(⋅ | ...) distributions
+(where `idx` maps into that tuple).
+
+Useful for merging behavior of multiple agents into a single distribution.
+"""
+struct CompoundDist{K, T, Ki} <: ConditionalDist{K, T}
+    dists::Tuple{Vararg{ConditionalDist{Ki, <:T}}}
+    idx_var::Symbol
+
+    function CompoundDist(dists...; idx, check_conditions=false)
+        T = typejoin(eltype.(dists)...)
+        K_i = conditions(dists[1])
+        if check_conditions
+            for dist in dists
+                if conditions(dist) != K_i
+                    throw(ArgumentError("Cannot compound distributions with different conditions:
+                    $K_i and $(conditions(dist))"))
+                end
+            end
+        end
+        K = [rv for rv in K_i if rv != idx] |> Tuple
+        new{K, T, K_i}(dists |> Tuple, idx)
+    end
+end
+
+function _get_dist(cd::CompoundDist; kwargs...)
+    cd.dists[kwargs[cd.idx_var]]
+end
+
+function rand!(rng::AbstractRNG, cd::CompoundDist{K, T}, dest::T; kwargs...) where {K, T}
+    rand!(rng, _get_dist(cd; kwargs...), dest; kwargs...)
+end
+function rand!(cd::CompoundDist{K, T}, dest::T; kwargs...) where {K, T}
+    rand!(_get_dist(cd; kwargs...), dest; kwargs...)
+end
+
+function support(cd::CompoundDist{K, T}; kwargs...) where {K, T}
+    support(_get_dist(cd; kwargs...); kwargs...)
+end
+
+function Random.rand(rng::AbstractRNG, cd::CompoundDist; kwargs...)
+    rand(rng, _get_dist(cd; kwargs...); kwargs...)
+end
+
+function Random.rand(cd::CompoundDist; kwargs...)
+    rand(_get_dist(cd; kwargs...); kwargs...)
+end
+
+function fix(cd::CompoundDist; kwargs...)
+    fix(_get_dist(cd; kwargs...); kwargs...)
+end
+
+function pdf(cd::CompoundDist, x; kwargs...)
+    pdf(_get_dist(cd; kwargs...), x; kwargs...)
+end
+
+function logpdf(cd::CompoundDist, x; kwargs...)
+    logpdf(_get_dist(cd; kwargs...), x; kwargs...)
+end
+
+
+
+"""
+    UniformDist{K, T} <: ConditionalDist{K, T}
+
+A discrete uniform distribution: selects elements from its finite support with equal
+probability.
+"""
+struct UniformDist{K, T} <: ConditionalDist{K, T}
+    support::Tuple{Vararg{T}} # TODO: Continuous support
+    UniformDist{K}(t) where {K} = new{K, eltype(t)}(t |> Tuple)
+    UniformDist(t) = new{(), eltype(t)}(t |> Tuple)
+end
+
+Random.rand(rng, cd::UniformDist; kwargs...) = rand(rng, cd.support)
+Random.rand(cd::UniformDist; kwargs...) = rand(cd.support)
+support(cd::UniformDist; kwargs...) = FiniteSpace(cd.support)

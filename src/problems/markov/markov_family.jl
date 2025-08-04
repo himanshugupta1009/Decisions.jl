@@ -101,12 +101,17 @@ end
 function markov_infer_trait(::Type{RewardStyle}, ambiguous_traits, behavior, ranges)
     if ! (:r ∈ keys(behavior))
         NoReward()
-    elseif ! (:j ∈ keys(ranges))
-        nonindexing_rvs = filter(x -> x ∉ (:i, :j), conditions(behavior[:r]))
-        SingleReward(nonindexing_rvs...)
     else
-        nonindexing_rvs = filter(x -> x ∉ (:i, :j), conditions(behavior[:r]))
-        MultipleRewards(ranges[:j], nonindexing_rvs...)
+        if ! (behavior[:r] isa ConditionalDist)
+            # TODO: Annoying special case wrt functions
+            ambiguous_traits[RewardStyle][1]
+        elseif ! (:j ∈ keys(ranges))
+            nonindexing_rvs = filter(x -> x ∉ (:i, :j), c)
+            SingleReward(nonindexing_rvs...)
+        else
+            nonindexing_rvs = filter(x -> x ∉ (:i, :j), c)
+            MultipleRewards(ranges[:j], nonindexing_rvs...)
+        end
     end
 end
 function markov_infer_trait(::Type{Observability}, ambiguous_traits, behavior, ranges)
@@ -117,7 +122,8 @@ function markov_infer_trait(::Type{TimestepStyle}, ambiguous_traits, behavior, r
 end
 function markov_infer_trait(::Type{Multiagency}, ambiguous_traits, behavior, ranges)
     if ! (:a ∈ keys(behavior))
-        NoAgent()
+        # TODO: This is an assumption
+        ambiguous_traits[Multiagency][1]
     elseif ! (:i ∈ keys(ranges))
         SingleAgent()
     else
@@ -149,9 +155,17 @@ function markov_check_type(ta::MarkovAmbiguousTraits, td::MarkovTraits)
     end
 end
 
+"""
+    @markov_alias(name, traits)
+
+Build a type alias and constructor for a standard Markov decision network with the given
+`traits`.
+
+`traits` is expected to be a `MarkovAmbiguousTraits`.
+"""
 macro markov_alias(name, abstract_traits)
     quote
-        const $name = Decisions.markov_type($abstract_traits)
+        Core.@__doc__ const $name = Decisions.markov_type($abstract_traits)
 
         function $name(plates=(;); kwargs...)
             behavior = NamedTuple(kwargs)

@@ -5,6 +5,11 @@ using Distributions
 using Random
 using ExprTools
 using StaticArrays
+using Memoization
+
+include("framework/terminal.jl")
+export Terminal
+export terminal
 
 include("framework/hints.jl")
 export DecisionsTrait
@@ -68,42 +73,47 @@ export indices
 include("framework/spaces.jl")
 export Space
 export FiniteSpace
+export TypeSpace
+export RangeSpace
+export SingletonSpace
 
 include("framework/conditional_dists.jl")
 export ConditionalDist
 export AnonymousDist
-# export UniformDist
-export EmptyDist
-# export CategoricalDist
-# export DeterministicDist
+export UndefinedDist
+export CompoundDist
+export UniformDist
 export @ConditionalDist
 
 export support
-export rand!
 export pdf
 export logpdf
 export fix
 export conditions
+
 
 include("framework/network_utils.jl")
 include("framework/validity.jl")
 include("framework/networks.jl")
 export DecisionGraph
 export DecisionNetwork
+
 export nodes
+export node_names
 export dynamic_pairs
+export ranges
+export implementation
+
 export sample
 export next
 export prev
 export graph
-export Terminal
 
-include("framework/algorithms.jl")
+include("framework/agents.jl")
 export DecisionAgent
 
 
-include("framework/objectives.jl")
-export DecisionObjective
+include("framework/metrics.jl")
 
 include("framework/settings.jl")
 export OfflineSetting

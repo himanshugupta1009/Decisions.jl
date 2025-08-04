@@ -12,13 +12,12 @@ macro DeCentr() :(Centralization => Decentralized()) end
 
 macro YesMem()  :(MemoryPresence => MemoryPresent()) end
 macro NoMem()   :(MemoryPresence => MemoryAbsent()) end
-macro AnyMem()  :(MemoryPresence => (MemoryPresent(), MemoryAbsent())) end
 
 macro NoRwd()   :(RewardStyle => NoReward()) end
-macro SRwd()    :(RewardStyle => (SingleReward(:s), SingleReward(:s, :sp))) end
+macro SRwd()    :(RewardStyle => SingleReward(:s), SingleReward(:s, :sp)) end
 macro ARwd()    :(RewardStyle => SingleReward(:a)) end
-macro SARwd()   :(RewardStyle => (SingleReward(:s), SingleReward(:s, :a), SingleReward(:s, :a, :sp))) end
-macro MARwd()   :(RewardStyle => (SingleReward(:m), SingleReward(:m, :a), SingleReward(:m, :a, :mp))) end
+macro SARwd()   :(RewardStyle => SingleReward(:s, :a, :sp)) end
+macro MARwd()   :(RewardStyle => SingleReward(:m, :a, :mp)) end
 
 macro NSRwds()  :(RewardStyle => (IndefiniteRewards(:s), IndefiniteRewards(:s, :sp))) end
 macro NARwds()  :(RewardStyle => IndefiniteRewards(:a)) end
@@ -38,33 +37,58 @@ macro Semi()    :(TimestepStyle => SemiMarkov()) end
 const _Traits = MarkovAmbiguousTraits
 
 # Trivial networks
-@markov_alias Empty_DN _Traits()
-@markov_alias MC_DN    _Traits(@HasS) # "in the beginning there was state. and state iterated"
+# @markov_alias Empty_DN _Traits()
+# @markov_alias MC_DN    _Traits(@HasS) # "in the beginning there was state. and state iterated"
 
 # Agentless networks
-@markov_alias HMM_DN       _Traits(@HasS, @PObs)
-@markov_alias MRwP_DN      _Traits(@HasS, @SRwd)
-@markov_alias MRnP_DN      _Traits(@HasS, @Semi)
+# @markov_alias HMM_DN       _Traits(@HasS, @PObs)
+# @markov_alias MRwP_DN      _Traits(@HasS, @SRwd)
+# @markov_alias MRnP_DN      _Traits(@HasS, @Semi)
 
 # Stateless networks (game theory)
-@markov_alias NFG_DN          _Traits(@NAgents, @UnCorr, @Comp, @ARwd)
-@markov_alias CorrNFG_DN      _Traits(@NAgents, @Comp, @ARwd)
-@markov_alias RG_DN           _Traits(@NAgents, @UnCorr, @Comp, @ARwd, @YesMem)
+# @markov_alias NFG_DN          _Traits(@NAgents, @UnCorr, @Comp, @ARwd)
+# @markov_alias CorrNFG_DN      _Traits(@NAgents, @Comp, @ARwd)
+# @markov_alias RG_DN           _Traits(@NAgents, @UnCorr, @Comp, @ARwd, @YesMem)
 
 # Single agent problems
-@markov_alias MDP_DN       _Traits(@HasS, @OneAgent, @AnyMem, @SARwd)
-@markov_alias SMDP_DN      _Traits(@HasS, @OneAgent, @AnyMem, @SARwd, @Semi)
+
+
+
+
+"""
+    MDP_DN
+
+Canonical decision network underlying a Markov decision process.
+
+Assumes the memory node is not present and the reward is conditioned on `(:s, :a, :sp)`.
+"""
+@markov_alias MDP_DN       _Traits(@HasS, @OneAgent, @NoMem, @SARwd)
+export MDP_DN
+
+"""
+    POMDP_DN
+
+Canonical decision network underlying a partially observable Markov decision process.
+
+Assumes the memory node is not present and the reward is conditioned on `(:s, :a, :sp)`.
+"""
 @markov_alias POMDP_DN     _Traits(@HasS, @OneAgent, @YesMem, @SARwd, @PObs)
-@markov_alias POSMDP_DN    _Traits(@HasS, @OneAgent, @YesMem, @SARwd, @PObs, @Semi)
-@markov_alias RhoPOMDP_DN  _Traits(@HasS, @OneAgent, @YesMem, @MARwd, @PObs)
-@markov_alias RhoPOSMDP_DN _Traits(@HasS, @OneAgent, @YesMem, @MARwd, @PObs, @Semi)
+export POMDP_DN
+
+
+
+
+# @markov_alias SMDP_DN      _Traits(@HasS, @OneAgent, @AnyMem, @SARwd, @Semi)
+# @markov_alias POSMDP_DN    _Traits(@HasS, @OneAgent, @YesMem, @SARwd, @PObs, @Semi)
+# @markov_alias RhoPOMDP_DN  _Traits(@HasS, @OneAgent, @YesMem, @MARwd, @PObs)
+# @markov_alias RhoPOSMDP_DN _Traits(@HasS, @OneAgent, @YesMem, @MARwd, @PObs, @Semi)
 
 # # # Multi agent fully observable problems
 # @markov_alias MMDP_DN        _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @SARwd)
 # @markov_alias MSMDP_DN       _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @SARwd, @Semi)
 # @markov_alias DecMMDP_DN     _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @SARwd)
 # @markov_alias DecMSMDP_DN    _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @SARwd, @Semi)
-@markov_alias MG_DN          _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @Comp, @SARwd)
+# @markov_alias MG_DN          _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @Comp, @SARwd)
 # @markov_alias SMG_DN         _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @Comp, @SARwd, @Semi)
 # @markov_alias IndMDP_DN      _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @Indv, @SARwd)
 # @markov_alias IndSMDP_DN     _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @Indv, @SARwd, @Semi)
