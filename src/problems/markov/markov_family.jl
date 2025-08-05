@@ -65,8 +65,7 @@ function markov_type(traits::MarkovTraits)
     nodes = markov_nodes(traits)
     dynamic_pairs = markov_dynamic_pairs(traits)
     ranges = markov_ranges(traits)
-    std_nodes, std_dynamic_pairs, std_ranges = _standardize_dn_type(nodes, dynamic_pairs, ranges)
-    DecisionNetwork{std_nodes, std_dynamic_pairs, std_ranges}
+    DecisionGraph(nodes, dynamic_pairs, ranges)
 end
 
 function markov_type(t::MarkovAmbiguousTraits)
@@ -167,12 +166,12 @@ macro markov_alias(name, abstract_traits)
     quote
         Core.@__doc__ const $name = Decisions.markov_type($abstract_traits)
 
-        function $name(plates=(;); kwargs...)
-            behavior = NamedTuple(kwargs)
-            concrete_traits = Decisions.markov_concretize_traits($abstract_traits, behavior, plates)
-            Decisions.markov_check_type($abstract_traits, concrete_traits)
-            Decisions.markov_type(concrete_traits)(; behavior...)
-        end
+        # function $name(plates=(;); kwargs...)
+        #     behavior = NamedTuple(kwargs)
+        #     concrete_traits = Decisions.markov_concretize_traits($abstract_traits, behavior, plates)
+        #     Decisions.markov_check_type($abstract_traits, concrete_traits)
+        #     Decisions.markov_type(concrete_traits)(; behavior...)
+        # end
     end |> esc
 end
 

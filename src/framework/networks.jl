@@ -21,15 +21,25 @@ struct DecisionNetwork{nodes, dynamic_pairs, ranges, B<:NamedTuple}
 
         new{N_standard, D_standard, R_standard, typeof(new_bhv)}(new_bhv)
     end
+
+    DecisionNetwork{N, D}(R::NamedTuple=(;); impls...) where {N, D} = DecisionNetwork{N, D, R}(; impls...)
 end
 
-function (::Type{Type{DecisionNetwork}})(nodes=nothing, dynamic_pairs=nothing, ranges=nothing)
+"""
+    const DecisionGraph = Type{<:DecisionNetwork}
+
+A decision graph: the graph structure of a decision network, with none of the distributions
+implemented.
+"""
+const DecisionGraph = Type{<:DecisionNetwork}
+
+function (::Type{DecisionGraph})(nodes=nothing, dynamic_pairs=nothing, ranges=nothing)
     n, d, r = _standardize_dn_type(nodes, dynamic_pairs, ranges)
     DecisionNetwork{
         n, 
         isnothing(d) ? D : d, 
         isnothing(r) ? R : r, B
-    } where {D, R, B}
+    } where {D, R, B<:NamedTuple}
 end
 
 function DecisionNetwork(nodes, dynamic_pairs=(;), ranges=(;); impls...)
@@ -37,34 +47,19 @@ function DecisionNetwork(nodes, dynamic_pairs=(;), ranges=(;); impls...)
     DecisionNetwork{N_standard, D_standard, R_standard}(impls...)
 end
 
-function Base.show(io::IO, z::DecisionNetwork)
-    names = [node_names(z)...; keys(dynamic_pairs(z))...; keys(ranges(z))...]
-    name_algn = maximum(length.(string.(names)))
-    print(io, "DecisionNetwork:")
-    for (a, b) in pairs(nodes(z))
-        padding = repeat(" ", name_algn - length(string(a)))
-        dist_type = if (a ∈ keys(implementation(z)))
-            Base.typename(typeof(z[a])).wrapper
-        else
-            "no impl"
-        end
-        print(io, "\n ", expr(b[2]), padding, " | ", join(string.(expr.(b[1])), ", "), 
-            "  (", dist_type, ")")
-        
-    end
-    for (a, b) in pairs(dynamic_pairs(z))
-        padding = repeat(" ", name_algn - length(string(b)))
-        print(io, "\n ", b, padding, " => ", a)
-    end
-    for (a, b) in pairs(ranges(z))
-        padding = repeat(" ", name_algn - length(string(a)))
-        print(io, "\n  ", a, padding, " ∈ ", "1:", b)
-    end
-end
+
+"""
+    graph(dn::DecisionNetwork)
+
+Give the decision graph for decision network `dn`.
+
+Essentially equivalent to `typeof(dn)`.`
+"""
+graph(::T) where {T <: DecisionNetwork} = T
 
 
 """
-    nodes(::Type{<:DecisionNetwork})
+    nodes(::DecisionGraph)
     nodes(::DecisionNetwork)
     
 Give the node definitions of a decision network.
@@ -74,7 +69,7 @@ nodes(::Type{<:DecisionNetwork{N}}) where {N} = N
 
 
 """
-    dynamic_pairs(::Type{<:DecisionNetwork})
+    dynamic_pairs(::DecisionGraph)
     dynamic_pairs(::DecisionNetwork)
     
 Give the dynamic pairs for a decision network, mapping current to next iterate node
@@ -85,7 +80,7 @@ dynamic_pairs(::Type{<:DecisionNetwork{N, D}}) where {N, D} = D
 
 
 """
-    ranges(::Type{<:DecisionNetwork})
+    ranges(::DecisionGraph)
     ranges(::DecisionNetwork)
     
 Give a NamedTuple defining the ranges over which plates in a decision network are defined:
@@ -94,7 +89,7 @@ index.
 """
 ranges(::DecisionNetwork{N, D, R}) where {N, D, R} = R
 ranges(::Type{<:DecisionNetwork{N, D, R}}) where {N, D, R} = R
-
+ranges(::Type{<:DecisionNetwork}) = nothing
 
 """
     implementation(dn::DecisionNetwork)
@@ -106,23 +101,23 @@ implementation(dn::DecisionNetwork) = dn.implementation
 
 
 """
-    node_names(::Type{<:DecisionNetwork})
+    node_names(::DecisionGraph)
     node_names(::DecisionNetwork)
 
 Give the names (as Symbols) of all nodes in a decision network.
 """
-node_names(dn::Type{<:DecisionNetwork}) = keys(nodes(dn))
+node_names(dn::DecisionGraph) = keys(nodes(dn))
 node_names(dn::DecisionNetwork) = keys(nodes(dn))
 
 
 """
-    conditions(dn::Type{<:DecisionNetwork}, s::Symbol)
+    conditions(dn::DecisionGraph, s::Symbol)
     conditions(dn::DecisionNetwork, s::Symbol)
 
 Give the names of the conditioning variables of `s` in `dn` (including any indexing
 variables).
 """
-function conditions(dn::Type{<:DecisionNetwork}, s::Symbol) 
+function conditions(dn::DecisionGraph, s::Symbol) 
     c = [
         [name(n) for n in nodes(dn)[s][1]]...;
         indices(nodes(dn)[s][2])...
@@ -138,21 +133,21 @@ end
 Base.getindex(dp::DecisionNetwork, rv::Symbol) = implementation(dp)[rv]
 
 Base.keys(dp::DecisionNetwork) = keys(nodes(dp))
-Base.keys(dp::Type{<:DecisionNetwork}) = keys(nodes(dp))
+Base.keys(dp::DecisionGraph) = keys(nodes(dp))
 
 Base.iterate(dp::DecisionNetwork) = iterate(keys(nodes(dp)))
-Base.iterate(dp::Type{<:DecisionNetwork}) = iterate(keys(nodes(dp)))
+Base.iterate(dp::DecisionGraph) = iterate(keys(nodes(dp)))
 
 Base.iterate(dp::DecisionNetwork, state) = iterate(keys(nodes(dp)), state)
-Base.iterate(dp::Type{<:DecisionNetwork}, state) = iterate(keys(nodes(dp)), state)
+Base.iterate(dp::DecisionGraph, state) = iterate(keys(nodes(dp)), state)
 
 Base.in(rv::Symbol, dp::DecisionNetwork) = rv ∈ keys(nodes(dp))
-Base.in(rv::Symbol, dp::Type{<:DecisionNetwork}) = rv ∈ keys(nodes(dp))
+Base.in(rv::Symbol, dp::DecisionGraph) = rv ∈ keys(nodes(dp))
 
 
 """
     next(dn::DecisionNetwork, node)
-    next(dn::Type{<:DecisionNetwork}, node)
+    next(dn::DecisionGraph, node)
 
 Give the next-step counterpart of `node` in a [type of] decision network `dn`.
 
@@ -165,12 +160,12 @@ julia> next(MDP_DN, :s)
 ```
 """
 next(dn::DecisionNetwork, rv::Symbol) = dynamic_pairs(dn)[rv]
-next(dn::Type{<:DecisionNetwork}, rv::Symbol) = dynamic_pairs(dn)[rv]
+next(dn::DecisionGraph, rv::Symbol) = dynamic_pairs(dn)[rv]
 
 
 """
     prev(dn::DecisionNetwork, node)
-    prev(dn::Type{<:DecisionNetwork}, node)
+    prev(dn::DecisionGraph, node)
 
 Give the previous-step counterpart of `node` in a [type of] decision network `dn`.
 
@@ -183,7 +178,7 @@ julia> prev(MDP_DN, :sp)
 ```
 """
 prev(dn::DecisionNetwork, rv::Symbol) = findfirst((i) -> i==rv, dynamic_pairs(dn))
-prev(dn::Type{<:DecisionNetwork}, rv::Symbol) = findfirst((i) -> i==rv, dynamic_pairs(dn))
+prev(dn::DecisionGraph, rv::Symbol) = findfirst((i) -> i==rv, dynamic_pairs(dn))
 
 
 """

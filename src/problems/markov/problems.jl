@@ -88,7 +88,17 @@ export POMDP_DN
 # @markov_alias MSMDP_DN       _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @SARwd, @Semi)
 # @markov_alias DecMMDP_DN     _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @SARwd)
 # @markov_alias DecMSMDP_DN    _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @SARwd, @Semi)
-# @markov_alias MG_DN          _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @Comp, @SARwd)
+
+"""
+    MG_DN
+
+Canonical decision network underlying a Markov game.
+
+"""
+@markov_alias MG_DN          _Traits(@HasS, @NAgents, @UnCorr, @NoMem, @DeCentr, @Comp, @SARwd)
+export MG_DN
+
+
 # @markov_alias SMG_DN         _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @Comp, @SARwd, @Semi)
 # @markov_alias IndMDP_DN      _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @Indv, @SARwd)
 # @markov_alias IndSMDP_DN     _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @Indv, @SARwd, @Semi)

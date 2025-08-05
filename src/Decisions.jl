@@ -103,6 +103,7 @@ export node_names
 export dynamic_pairs
 export ranges
 export implementation
+export graph
 
 export sample
 export next
@@ -126,6 +127,9 @@ export Memoryless
 
 export transform
 
+include("framework/show.jl")
+
 include("problems/markov/Markov.jl")
+
 
 end # module Decisions
