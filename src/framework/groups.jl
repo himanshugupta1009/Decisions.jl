@@ -56,6 +56,8 @@ There can be various independence relationships between the nodes in the group. 
 """
 abstract type Plate{id, idxs, hints} <: RVGroup{id, idxs} end
 
+hints(::Plate{id, idxs, H}) where {id, idxs, H} = H
+
 
 function Terminality(::Plate{id, idxs, hints}) where {id, idxs, hints} 
     if :is_terminable ∉ keys(hints) 
@@ -149,19 +151,4 @@ function _from_expr(node_type, expr)
     else
         throw(ArgumentError("Cannot parse expression $expr as a node or node group"))
     end
-end
-
-
-const NodeDef = Pair{Tuple{Vararg{ConditioningGroup}}, Plate}
-
-inputs(e::NodeDef) = e[1]
-output(e::NodeDef) = e[2]
-
-function node_def(pair::Pair) 
-    inputs = map(pair[1]) do node
-        convert(ConditioningGroup, node)
-    end |> Tuple
-    sorted_inputs = sort([inputs...]; lt = (a, b) -> (name(a) < name(b))) |> Tuple
-    output = convert(Plate, pair[2])
-    sorted_inputs => output
 end

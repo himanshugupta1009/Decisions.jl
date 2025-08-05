@@ -21,8 +21,7 @@ function Base.show(io::IO, z::DecisionNetwork)
     end |> values
     dist_strings = map(keys(nodes(z))) do rv
         if rv ∈ keys(implementation(z))
-            dist_type = Base.typename(typeof(z[a])).wrapper
-            print(io, "  (", dist_type, ")")
+            string(Base.typename(typeof(z[rv])).wrapper)
         else
             ""
         end
@@ -57,7 +56,7 @@ function Base.show(io::IO, z::DecisionNetwork)
         if isempty(c)
             printstyled(io, "  (no dist)", color=:light_black)
         else
-            print(io, "  ", c)
+            print(io, "  (", c, ")")
         end
     end
 

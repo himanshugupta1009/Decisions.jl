@@ -26,7 +26,7 @@ struct DecisionNetwork{nodes, dynamic_pairs, ranges, B<:NamedTuple}
 end
 
 """
-    const DecisionGraph = Type{<:DecisionNetwork}
+    const DecisionGraph
 
 A decision graph: the graph structure of a decision network, with none of the distributions
 implemented.
@@ -52,10 +52,8 @@ end
     graph(dn::DecisionNetwork)
 
 Give the decision graph for decision network `dn`.
-
-Essentially equivalent to `typeof(dn)`.`
 """
-graph(::T) where {T <: DecisionNetwork} = T
+graph(::DecisionNetwork{N, D, R}) where {N, D, R} = DecisionNetwork{N, D, R}
 
 
 """
@@ -86,6 +84,8 @@ dynamic_pairs(::Type{<:DecisionNetwork{N, D}}) where {N, D} = D
 Give a NamedTuple defining the ranges over which plates in a decision network are defined:
 each key is a name of an indexing variables, and each value is the plate size along that
 index.
+
+If given a `DecisionGraph` where the `range` parameter is not specified, returns `nothing`.
 """
 ranges(::DecisionNetwork{N, D, R}) where {N, D, R} = R
 ranges(::Type{<:DecisionNetwork{N, D, R}}) where {N, D, R} = R

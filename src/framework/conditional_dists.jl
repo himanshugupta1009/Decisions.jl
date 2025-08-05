@@ -370,8 +370,6 @@ function logpdf(cd::CompoundDist, x; kwargs...)
     logpdf(_get_dist(cd; kwargs...), x; kwargs...)
 end
 
-
-
 """
     UniformDist{K, T} <: ConditionalDist{K, T}
 

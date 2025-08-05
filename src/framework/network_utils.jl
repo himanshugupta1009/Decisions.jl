@@ -31,7 +31,12 @@ Output is a 3-tuple. `nodes` is required. If `dynamic_pairs` and `ranges` are no
 """
 function _standardize_dn_type(nodes, dynamic_pairs=nothing, ranges=nothing)
     defs = map(nodes) do node
-        node_def(node)
+        inputs = map(node[1]) do node
+            convert(ConditioningGroup, node)
+        end |> Tuple
+        sorted_inputs = sort([inputs...]; lt = (a, b) -> (name(a) < name(b))) |> Tuple
+        output = convert(Plate, node[2])
+        sorted_inputs => output
     end |> Tuple
     names = map(defs) do def
         name(def[2])
