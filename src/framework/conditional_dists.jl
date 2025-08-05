@@ -7,11 +7,6 @@ a random variable of type `T`.
 """
 abstract type ConditionalDist{K, T} end
 
-
-function Base.show(io::IO, z::ConditionalDist{K, T}) where {K, T}
-    print(io, Base.typename(typeof(z)).wrapper, " ", "P(::", T, " | ", join(K, ", "), ")")
-end
-
 """
     Base.eltype(::ConditionalDist{K, T}) where {K, T}
 
@@ -76,8 +71,12 @@ Random.rand(cd::ConditionalDist; kwargs...) = Random.rand(default_rng(), cd; kwa
 
 Fix any number of variables conditioning a distribution to particular values, returning a
 new conditional distribution conditioned on the variables that remain.
+
+By default produces a FixedDist.
 """
-function fix end
+function fix(cd::ConditionalDist; rvs...)
+    FixedDist(cd; rvs...)
+end
 
 
 """
@@ -238,7 +237,11 @@ function Random.rand(cd::AnonymousDist{K, T}; kwargs...
 end
 
 function fix(cd::AnonymousDist; kwargs...) 
-    cd.fix(; kwargs...)
+    if ismissing(cd.fix)
+        FixedDist(cd; kwargs...)
+    else
+        cd.fix(; kwargs...)
+    end
 end
 
 function logpdf(cd::AnonymousDist, x; kwargs...)
@@ -315,24 +318,28 @@ A distribution which implements P(⋅ | idx, ...) using a `Tuple` of P(⋅ | ...
 
 Useful for merging behavior of multiple agents into a single distribution.
 """
-struct CompoundDist{K, T, Ki} <: ConditionalDist{K, T}
-    dists::Tuple{Vararg{ConditionalDist{Ki, <:T}}}
+struct CompoundDist{K_new, T, K_old} <: ConditionalDist{K_new, T}
+    dists::Tuple{Vararg{ConditionalDist{K_old, <:T}}}
     idx_var::Symbol
 
     function CompoundDist(dists...; idx, check_conditions=false)
         T = typejoin(eltype.(dists)...)
-        K_i = conditions(dists[1])
+        K_old = conditions(dists[1])
         if check_conditions
             for dist in dists
-                if conditions(dist) != K_i
+                if conditions(dist) != K_old
                     throw(ArgumentError("Cannot compound distributions with different conditions:
-                    $K_i and $(conditions(dist))"))
+                    $K_old and $(conditions(dist))"))
                 end
             end
         end
-        K = [rv for rv in K_i if rv != idx] |> Tuple
-        new{K, T, K_i}(dists |> Tuple, idx)
+        K = (K_old..., idx) |> Tuple
+        new{K, T, K_old}(dists |> Tuple, idx)
     end
+end
+
+@generated function _rvs_for(::CompoundDist{K, T, K_new}, rvs) where {K, T, K_new}
+    :(rvs[$(K_new)])
 end
 
 function _get_dist(cd::CompoundDist; kwargs...)
@@ -340,35 +347,86 @@ function _get_dist(cd::CompoundDist; kwargs...)
 end
 
 function rand!(rng::AbstractRNG, cd::CompoundDist{K, T}, dest::T; kwargs...) where {K, T}
-    rand!(rng, _get_dist(cd; kwargs...), dest; kwargs...)
+    rand!(rng, _get_dist(cd; kwargs...), dest; rvs_for(cd, kwargs)...)
 end
 function rand!(cd::CompoundDist{K, T}, dest::T; kwargs...) where {K, T}
-    rand!(_get_dist(cd; kwargs...), dest; kwargs...)
+    rand!(_get_dist(cd; kwargs...), dest; rvs_for(cd, kwargs)...)
 end
 
 function support(cd::CompoundDist{K, T}; kwargs...) where {K, T}
-    support(_get_dist(cd; kwargs...); kwargs...)
+    support(_get_dist(cd; kwargs...); rvs_for(cd, kwargs)...)
 end
 
 function Random.rand(rng::AbstractRNG, cd::CompoundDist; kwargs...)
-    rand(rng, _get_dist(cd; kwargs...); kwargs...)
+    rand(rng, _get_dist(cd; kwargs...); rvs_for(cd, kwargs)...)
 end
 
 function Random.rand(cd::CompoundDist; kwargs...)
-    rand(_get_dist(cd; kwargs...); kwargs...)
+    rand(_get_dist(cd; kwargs...); rvs_for(cd, kwargs)...)
 end
 
 function fix(cd::CompoundDist; kwargs...)
-    fix(_get_dist(cd; kwargs...); kwargs...)
+    fix(_get_dist(cd; kwargs...); rvs_for(cd, kwargs)...)
 end
 
 function pdf(cd::CompoundDist, x; kwargs...)
-    pdf(_get_dist(cd; kwargs...), x; kwargs...)
+    pdf(_get_dist(cd; kwargs...), x; rvs_for(cd, kwargs)...)
 end
 
 function logpdf(cd::CompoundDist, x; kwargs...)
-    logpdf(_get_dist(cd; kwargs...), x; kwargs...)
+    logpdf(_get_dist(cd; kwargs...), x; rvs_for(cd, kwargs)...)
 end
+
+
+
+
+struct FixedDist{K_new, T, K_old, D<:ConditionalDist{K_old, T}, V<:NamedTuple} <: ConditionalDist{K_new, T}
+    base_dist::D
+    values::V
+
+    function FixedDist(cd; rvs...) 
+        T = eltype(cd)
+        K_old = conditions(cd)
+        K_new = [rv for rv in K_old if rv ∉ keys(rvs)] |> Tuple
+        v = rvs |> NamedTuple
+        new{K_new, T, K_old, typeof(cd), typeof(v)}(cd, v)
+    end
+end
+
+function rand!(rng::AbstractRNG, cd::FixedDist{K, T}, dest::T; kwargs...) where {K, T}
+    rand!(rng, cd.base_dist, dest; kwargs..., cd.values...)
+end
+function rand!(cd::FixedDist{K, T}, dest::T; kwargs...) where {K, T}
+    rand!(cd.base_dist, dest; kwargs..., cd.values...)
+end
+
+function support(cd::FixedDist{K, T}; kwargs...) where {K, T}
+    support(cd.base_dist; kwargs..., cd.values...)
+end
+
+function Random.rand(rng::AbstractRNG, cd::FixedDist; kwargs...)
+    rand(rng, cd.base_dist; kwargs..., cd.values...)
+end
+
+function Random.rand(cd::FixedDist; kwargs...)
+    rand(cd.base_dist; kwargs..., cd.values...)
+end
+
+function fix(cd::FixedDist; kwargs...)
+    # We'd like to avoid having recursive FixedDists
+    new_fixes = merge(cd.values, kwargs |> NamedTuple)
+    FixedDist(cd.base_dist; new_fixes...)
+end
+
+function pdf(cd::FixedDist, x; kwargs...)
+    pdf(cd.base_dist, x; kwargs..., cd.values...)
+end
+
+function logpdf(cd::FixedDist, x; kwargs...)
+    logpdf(cd.base_dist, x; kwargs..., cd.values...)
+end
+
+
 
 """
     UniformDist{K, T} <: ConditionalDist{K, T}

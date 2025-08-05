@@ -6,7 +6,7 @@ function _default_transform(trans::DNTransformation, dn::DecisionNetwork)
 end
 
 struct Insert <: DNTransformation 
-    nodes::Tuple{Vararg{NodeDef}}
+    nodes
     Insert(nodes...) = new(node_def.(nodes) |> Tuple)
 end
 
@@ -16,8 +16,6 @@ function transform(trans::Insert, g::DecisionGraph)
 end
 
 transform(trans::Insert, dn::DecisionNetwork) = _default_transform(trans, dn)
-
-
 
 struct Implement{B <: NamedTuple} <: DNTransformation
     implementation::B
