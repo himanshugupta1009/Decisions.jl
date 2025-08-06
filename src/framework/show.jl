@@ -17,7 +17,9 @@ function Base.show(io::IO, z::DecisionNetwork)
         string(expr(node_def[2]))
     end |> values
     cond_strings = map(nodes(z)) do node_def
-        join(string.(expr.(node_def[1])), ", ")
+        s = string.(expr.(node_def[1])) |> collect
+        append!(s, string.(indices(node_def[2])))
+        join(s, ", ")
     end |> values
     dist_strings = map(keys(nodes(z))) do rv
         if rv ∈ keys(implementation(z))

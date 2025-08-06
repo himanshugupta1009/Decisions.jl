@@ -83,6 +83,8 @@ export AnonymousDist
 export UndefinedDist
 export CompoundDist
 export UniformDist
+export CollectDist
+export FixedDist
 export @ConditionalDist
 
 export support
@@ -120,12 +122,16 @@ include("framework/settings.jl")
 export OfflineSetting
 
 include("framework/transformations.jl")
-export Collapse
-export Recondition
-export Insert
-export Memoryless
-
+export DNTransformation
 export transform
+
+export Insert
+export Implement
+export Unimplement
+export Recondition
+export IndexExplode
+export MergeForward
+export Rename
 
 include("framework/show.jl")
 

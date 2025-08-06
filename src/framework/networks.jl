@@ -125,8 +125,8 @@ function conditions(dn::DecisionGraph, s::Symbol)
     _sorted_tuple(c)
 end
 
-function conditions(dn::DecisionNetwork, s::Symbol)
-    conditions(dn[s])
+function conditions(dn::T, s::Symbol) where {T <: DecisionNetwork}
+    conditions(T, s)
 end
 
 
@@ -226,8 +226,6 @@ end
     _::Val{rvs_out}) where {rvs_out, rvs_in}
 
     nodes_in_order = _crawl_dn(dn, rvs_in, rvs_out)
-
-
     
     # Zeroeth pass: Inputs
     zeroeth_pass_block = quote 

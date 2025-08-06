@@ -63,7 +63,7 @@ Sample from a conditional distribution, given values of conditioning variables i
 
 Equivalent to cd(; kwargs...).
 """
-Random.rand(cd::ConditionalDist; kwargs...) = Random.rand(default_rng(), cd; kwargs...)
+Random.rand(cd::ConditionalDist; kwargs...) = Random.rand(Random.default_rng(), cd; kwargs...)
 
 
 """
@@ -377,9 +377,15 @@ function logpdf(cd::CompoundDist, x; kwargs...)
     logpdf(_get_dist(cd; kwargs...), x; rvs_for(cd, kwargs)...)
 end
 
+"""
+    FixedDist <: ConditionalDist
 
+A conditional distribution that wraps another, maintaining values of fixed variables; also,
+the default output of `fix`.
 
-
+Forwards most standard `ConditionalDist` functions to its underlying distribution,
+conditioned on the inputs and the fixed variables.
+"""
 struct FixedDist{K_new, T, K_old, D<:ConditionalDist{K_old, T}, V<:NamedTuple} <: ConditionalDist{K_new, T}
     base_dist::D
     values::V
@@ -427,6 +433,146 @@ function logpdf(cd::FixedDist, x; kwargs...)
 end
 
 
+"""
+    RenamedDist <: ConditionalDist
+
+A conditional distribution that wraps another, renaming the conditioning variables.
+"""
+struct RenamedDist{K_new, T, K_old, D<:ConditionalDist{K_old, T}, N} <: ConditionalDist{K_new, T}
+    base_dist::D
+
+    function RenamedDist(cd; names...) 
+        T = eltype(cd)
+        K_old = conditions(cd)
+        K_new = values(names) |> _sorted_tuple
+        @assert K_old == keys(names)
+        new{K_new, T, K_old, typeof(cd), names |> NamedTuple}(cd)
+    end
+
+    # TODO: Prevent stacking RenamedDist needlessly
+end
+
+@generated function _rvs_for(::RenamedDist{K_new, T, K_old, D, N}, rvs) where {K_new, T, K_old, D, N}
+    :(K_old .=> rvs[$(N[K_old])])
+end
+
+function rand!(rng::AbstractRNG, cd::RenamedDist{K, T}, dest::T; kwargs...) where {K, T}
+    rand!(rng, cd.base_dist, dest; _rvs_for(cd, kwargs)...)
+end
+function rand!(cd::RenamedDist{K, T}, dest::T; kwargs...) where {K, T}
+    rand!(cd.base_dist, dest; _rvs_for(cd, kwargs)...)
+end
+
+function support(cd::RenamedDist{K, T}; kwargs...) where {K, T}
+    support(cd.base_dist; _rvs_for(cd, kwargs)...)
+end
+
+function Random.rand(rng::AbstractRNG, cd::RenamedDist; kwargs...)
+    rand(rng, cd.base_dist; _rvs_for(cd, kwargs)...)
+end
+
+function Random.rand(cd::RenamedDist; kwargs...)
+    rand(cd.base_dist; _rvs_for(cd, kwargs)...)
+end
+
+# TODO: for now default fix is fine I guess
+
+function pdf(cd::RenamedDist, x; kwargs...)
+    pdf(cd.base_dist, x; _rvs_for(cd, kwargs)...)
+end
+
+function logpdf(cd::RenamedDist, x; kwargs...)
+    logpdf(cd.base_dist, x; _rvs_for(cd, kwargs)...)
+end
+
+"""
+    MergedDist <: ConditionalDist
+
+A conditional distribution which merges two subdistributions, using one as an input for
+another.
+"""
+struct MergedDist{K, T, rv, Ka, Ta, Kb} <: ConditionalDist{K, T}
+    # I don't think there's any good way to prevent nested MergedDists
+    #   (since we have to maintain every constituent dist anyway)
+    dist_a::ConditionalDist{Ka, Ta}
+    dist_b::ConditionalDist{Kb, T}
+    # a => b
+    function MergedDist(dist_b::ConditionalDist, input::Pair{Symbol, <:ConditionalDist})
+        rv = input[1]
+        dist_a = input[2]
+        Ka = conditions(dist_a)
+        Kb = conditions(dist_b)
+        K = filter(s -> s != rv, (Ka..., Kb...)) |> Set |> _sorted_tuple
+        Ta = eltype(dist_a)
+        T = eltype(dist_b)
+        new{K, T, rv, Ka, Ta, Kb}(dist_a, dist_b)
+    end
+end
+
+
+@generated function _rvs_for_a(::MergedDist{K, T, rv, Ka, Ta, Kb}, rvs) where {K, T, rv, Ka, Ta, Kb}
+    :(rvs[$(Ka)])
+end
+@generated function _rvs_for_b(cd::MergedDist{K, T, rv, Ka, Ta, Kb}, rvs) where {K, T, rv, Ka, Ta, Kb}
+    Kb_only = [r for r in Kb if r != rv]
+    :(rvs[$(Kb_only)])
+end
+
+function rand!(rng::AbstractRNG, cd::MergedDist{K, T, rv}, dest::T; kwargs...) where {K, T, rv}
+    # TODO: No way to do this middle RV in place; annoying
+    x = rand(rng, cd.dist_a; _rvs_for_a(cd, kwargs)...)
+    rand!(rng, cd.dist_b, dest; _rvs_for_b(cd, kwargs)..., rv => x)
+end
+function rand!(cd::MergedDist{K, T, rv}, dest::T; kwargs...) where {K, T, rv}
+    x = rand(cd.dist_a; _rvs_for_a(cd, kwargs)...)
+    rand!(cd.dist_b, dest; _rvs_for_b(cd, kwargs)..., rv => x)
+end
+
+function support(cd::MergedDist{K, T}; kwargs...) where {K, T}
+    # TODO: Also, weirdly, can't scope support on :a
+    support(cd.dist_b; _rvs_for_b(cd, kwargs)...)
+end
+
+function Random.rand(rng::AbstractRNG, cd::MergedDist{K, T, rv}; kwargs...) where {K, T, rv}
+    x = rand(rng, cd.dist_a; _rvs_for_a(cd, kwargs)...)
+    rand(rng, cd.dist_b; _rvs_for_b(cd, kwargs)..., rv => x)
+end
+
+function Random.rand(cd::MergedDist{K, T, rv}; kwargs...) where {K, T, rv}
+    x = rand(cd.dist_a; _rvs_for_a(cd, kwargs)...)
+    rand(cd.dist_b; _rvs_for_b(cd, kwargs)..., rv => x)
+end
+
+
+"""
+    CollectDist <: ConditionalDist
+
+A deterministic conditional dist which simply stacks its inputs as a Tuple. 
+"""
+struct CollectDist{K, T} <: ConditionalDist{K, T}
+    function CollectDist(el, rvs...)
+        T = Tuple{[el for _ in rvs]...}
+        new{rvs |> _sorted_tuple, T}()
+    end
+end
+
+# TODO: Using default rand!
+
+# TODO: Should be marked as deterministic
+
+# TODO: No support(), even though it's totally possible
+
+function Random.rand(rng::AbstractRNG, cd::CollectDist{K, T}; kwargs...) where {K, T}
+    map(K) do k
+        kwargs[k]
+    end 
+end
+
+
+# Default `fix` is correct
+
+# PDF is Dirac delta which we don't have implemented yet
+
 
 """
     UniformDist{K, T} <: ConditionalDist{K, T}
@@ -440,6 +586,7 @@ struct UniformDist{K, T} <: ConditionalDist{K, T}
     UniformDist(t) = new{(), eltype(t)}(t |> Tuple)
 end
 
-Random.rand(rng, cd::UniformDist; kwargs...) = rand(rng, cd.support)
+Random.rand(rng::AbstractRNG, cd::UniformDist; kwargs...) = rand(rng, cd.support)
 Random.rand(cd::UniformDist; kwargs...) = rand(cd.support)
 support(cd::UniformDist; kwargs...) = FiniteSpace(cd.support)
+

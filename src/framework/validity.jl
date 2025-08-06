@@ -6,6 +6,8 @@
 # * Conditions on dists and on DG must match
 # * Conditioning groups all come from actual plates
 
+# TODO: Check named indices in nodes are actually included in `ranges`
+
 function _check_dn_typespace(dn)
     _check_tparam(nodes(dn), Pair{<:Tuple{Vararg{ConditioningGroup}}, <:Plate}, "nodes")
     _check_tparam(dynamic_pairs(dn), Symbol, "dynamic_pairs")

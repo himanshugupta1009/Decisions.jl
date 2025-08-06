@@ -152,3 +152,13 @@ function _from_expr(node_type, expr)
         throw(ArgumentError("Cannot parse expression $expr as a node or node group"))
     end
 end
+
+
+# is there a more idomatic way to do this?
+rename(::Dense{id}, id2) where {id} = Dense(id2)
+rename(::Parallel{id, idxs}, id2) where {id, idxs} = Parallel(id2, idxs...)
+rename(::Joint{id, idxs, hints}, id2) where {id, idxs, hints} = Joint(id2, idxs...; hints...)
+rename(::Indep{id, idxs, hints}, id2) where {id, idxs, hints} = Indep(id2, idxs...; hints...)
+
+# TODO: Nothing works on JointAndIndep
+# rename(::JointAndIndep{id, idxs, n_joint, hints}) where {id, idxs, n_joint, hints} = JointAndIndep{id2, idxs, n_joint, hints}()

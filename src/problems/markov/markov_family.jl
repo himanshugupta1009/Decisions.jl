@@ -9,6 +9,15 @@ struct MarkovTraits
     MarkovTraits(pairs...) = new(Dict{Type{<:DecisionsTrait}, DecisionsTrait}(pairs...))
 end
 
+"""
+    MarkovAmbiguousTraits
+    MarkovAmbiguousTraits(pairs...)
+
+A collection of traits for a standard Markov family problem.
+
+`pairs` are `Trait => TraitValue` mappings; e.g., `Multiagency => NoAgent()`. Any traits
+that are not defined default using `markov_default`.
+"""
 struct MarkovAmbiguousTraits
     dict::Dict{Type{<:DecisionsTrait}, Tuple{Vararg{DecisionsTrait}}}
 
@@ -160,7 +169,8 @@ end
 Build a type alias and constructor for a standard Markov decision network with the given
 `traits`.
 
-`traits` is expected to be a `MarkovAmbiguousTraits`.
+`traits` is expected to be a `MarkovAmbiguousTraits`. If any traits are ambiguous, a Union
+over the possible decision graphs is defined. Otherwise, a single decision graph is defined.
 """
 macro markov_alias(name, abstract_traits)
     quote
