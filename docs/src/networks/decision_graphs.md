@@ -18,6 +18,7 @@ This the _standard Markov family_. Decisions.jl provides a shorthand for definin
 types of networks due to their ubiquity.
 
 ```
+```
 
 ## Arbitrary networks
 

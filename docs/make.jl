@@ -19,6 +19,7 @@ makedocs(
             "networks/conditional_dists.md",
             "networks/spaces.md",
             "networks/traits.md",
+            "networks/transformations.md",
         ],
     ],
     warnonly = [:missing_docs, :cross_references]

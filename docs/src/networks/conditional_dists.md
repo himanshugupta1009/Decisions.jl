@@ -27,9 +27,9 @@ all of the following functions:
 | `pdf`         | `exp(logpdf(...))` | Give probability [density] of an output value.
 | `conditions`  | `K`                | Tuple of Symbol names of random variables conditioning a CD.
 | `Base.eltype` | `T`                | Output type of values generated according to a CD.
+| `fix`         | `FixedDist(...)`   | Fix value of a conditioning variable of a CD for a new CD.
 | `Base.rand`   | none               | Sample from a CD, conditioned on RVs as keyword arguments.
 | `logpdf`      | none               | Give log-probability [density] of a output value.
-| `fix`         | none               | Fix value of a conditioning variable of a CD for a new CD.
 
 To be considered valid, all the above functions defined for `ConditionalDists` must be pure
 (with the exception of the in-place functions, which may only modify their destination
@@ -41,13 +41,14 @@ argument.)
     it's impossible to make accurate guarantees about related `Decisions` objects,
     which can result in unexpected or incorrect behavior from solvers.
 
-### Random variables are keyword arguments
+### Random variable values are keyword arguments
 
 In functions that accept them, the values of random variables that condition a
-`ConditionalDist` are given as keyword arguments. Be aware of these consequences:
+`ConditionalDist` are given as keyword arguments (where the keyword is the name of the
+random variable). Be aware of these consequences:
 
-* Conditioning variables are orderless, matching their mathematical presentation (i.e., ``p(x
-| A=a, B=b) = p(x | B=b, A=a)``).
+* Conditioning variables are orderless, matching their mathematical presentation (i.e.,
+  ``p(x| A=a, B=b) = p(x | B=b, A=a)``).
 * Functions like `support` can be defined for arbitrary combinations of conditioning
 variables, or none at all. Use `rv=missing` as the default keyword value in this case and
 check for presence with `ismissing`.
@@ -140,7 +141,7 @@ rewritten as:
 ```
 
 
-### Named conditional distributions
+### Structural conditional distributions
 
 DecisionNetworks.jl provides a few very basic distributions explicitly which have important
 structural meaning:
@@ -148,6 +149,8 @@ structural meaning:
 ```@docs
 UndefinedDist
 CompoundDist
+CollectDist
+FixedDist
 UniformDist
 ```
 
@@ -169,44 +172,6 @@ Some basic objects can be interpreted as `ConditionalDist`s with `convert`:
 * `Space`s are interpreted as `UndefinedDist`s which return the given space their
   unconditioned support. Only the conditioning variable names `{K}` on the target
   `ConditionalDist{K}` need be defined; the output type `T` is inferred from the space.
-
-
-## Performance tips for `ConditionalDist`s
-
-!!! todo
-    
-    Need to write some tests to confirm this behavior.
-
-Sampling a distribution often occurs in a very tight loop, making performance within the
-distribution very important. Aside from the general [performance tips for Julia
-code](https://docs.julialang.org/en/v1/manual/performance-tips), here are a few specific
-ways to optimize code using `ConditionalDist`s:
-
-### Prefer `rand!` over `rand`
-
-When it's possible to sample a distribution in place, doing so can reduce unnecessary
-allocations and therefore speed up your code.
-
-### Prefer `logpdf` over `pdf`
-
-For the usual numerical reasons, it's generally preferable to use `logpdf` where possible;
-`pdf` simply defaults to `exp(logpdf(...))`. When it really is more efficient to calculate
-the PDF, `pdf` (and `logpdf`) can be specialized to change this behavior.
-
-### Provide a concrete sample type
-
-If the `eltype` of a `ConditionalDist` is concrete, it is possible to generate very
-performant, potentially stack-allocated sampling code. Using `Any` or other abstract types
-_will_ work and can be useful for prototyping, but comes at a performance cost. 
-
-### Use @ConditionalDist wisely
-
-When using @ConditionalDist, be aware that there may be subtle performance impacts,
-[particularly with regards to
-closures](https://docs.julialang.org/en/v1/manual/performance-tips/#man-performance-captured). 
-If in doubt in a performance-critical setting, use an explicitly defined distribution.
-
-
 
 
 

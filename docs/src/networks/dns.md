@@ -2,7 +2,7 @@
 using Decisions
 ```
 
-# Using decision networks
+# Decision networks
 
 The fundamental unit of problem description in Decisions.jl is the (dynamic) _decision
 network_ or (D)DN (variously related to or synonymous with "influence diagram," "generalized
@@ -64,7 +64,7 @@ used networks, but later sections in this documentation deal with [types for arb
 networks](@ref), which is where DecisionNetworks shines.
 
 
-## Querying DNs
+## Sampling DNs
 As mentioned above, every node in a DN is a random variable with a `Symbol` name.
 Conditional distributions for nodes can be obtained with index notation:
 
@@ -81,7 +81,6 @@ An entire DN or DDN can be sampled given inputs with `sample`:
 ```@docs
 sample
 ```
-
 
 ## Using DN structure
 

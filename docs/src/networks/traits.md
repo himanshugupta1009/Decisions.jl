@@ -2,7 +2,7 @@
 
 Decisions.jl provides a variety of named traits on `DecisionNetwork`s, `ConditionalDist`s,
 and other objects in the package. They serve as hints to algorithms as well as the package
-itself, which can occasionally specialize generated code accordingly.
+itself.
 
 This page provides the technical docs for each trait.
 
@@ -117,4 +117,4 @@ Decisions.MaybeTerminable
 !!! todo
 
     None exist yet. I think things like `Finitude` and `Countability` are reasonable, 
-    but they're a low (and fairly academic) priority.
+    but they're a low priority.
