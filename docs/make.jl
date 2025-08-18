@@ -1,11 +1,11 @@
 using Documenter
-using Decisions
+using DecisionNetworks
 using Random
 
-DocMeta.setdocmeta!(Decisions, :DocTestSetup, :(using Decisions); recursive=true)
+DocMeta.setdocmeta!(DecisionNetworks, :DocTestSetup, :(using DecisionNetworks); recursive=true)
 
 makedocs(
-    modules = [Decisions],
+    modules = [DecisionNetworks],
     format = Documenter.HTML(
         prettyurls = false                                  # For Local Doc Development
         #prettyurls = get(ENV, "CI", nothing) == "true"     # For GitHub Deployment
@@ -16,11 +16,18 @@ makedocs(
         "index.md",
         "DecisionNetworks.jl" => [
             "networks/dns.md",
+            "networks/decision_graphs.md",
             "networks/conditional_dists.md",
             "networks/spaces.md",
             "networks/traits.md",
             "networks/transformations.md",
         ],
+        "DecisionProblems.jl" => [
+
+        ],
+        "DecisionSettings.jl" => [
+
+        ]
     ],
     warnonly = [:missing_docs, :cross_references]
 )

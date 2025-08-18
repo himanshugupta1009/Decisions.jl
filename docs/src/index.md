@@ -7,17 +7,31 @@ interface for a rich set of decision problems: from the most basic Markov decisi
 processes, to rich and expressive multi-agent, semi-Markov, multi-objective extensions, to
 complex problems unifying decision-, control-, and game-theoretic models.
 
-Decisions.jl is factored into multiple packages:
-
-* [**`DecisionNetworks.jl`**](@ref) (closed beta) provides fundamental tools for the ecosystem: representations
-  for decision networks, conditional distributions, support spaces, and visualizations.
-* [**`DecisionProblems.jl`**](@ref) (closed alpha) introduces objectives over decision networks and
-  formal definitions of decision problems.
-* [**`DecisionSettings.jl`**](@ref) (closed alpha) introduces real-world decision making scenarios,
-  surgically defining concepts of agents, training loops, and environment interactions to
-  permit truly exact comparisons between algorithms.
-
 Decisions.jl is a work in progress. Please report issues and feature requests [on Github](https://github.com/JuliaDecisionMaking/Decisions.jl/issues).
+
+##
+
+Decisions.jl is factored into three framework packages:
+
+* [**`DecisionNetworks.jl`**](@ref) (closed beta) provides fundamental tools for the
+  ecosystem: representations for decision networks, conditional distributions, support
+  spaces, and visualizations.
+* [**`DecisionProblems.jl`**](@ref) (closed alpha) introduces objectives over decision
+  networks and formal definitions of decision problems.
+* [**`DecisionSettings.jl`**](@ref) (closed alpha) introduces real-world decision making
+  scenarios, surgically defining concepts of agents, training loops, and environment
+  interactions to permit truly exact comparisons between algorithms.
+
+... and two implementation packages:
+
+* [**`DecisionDomains.jl`**](@ref) provides implementations of common baseline decision
+  making domains for benchmarking ([and benchmarking only](@ref)).
+* [**`DecisionAlgorithms.jl`**](@ref) provides off-the-shelf implementations of classic
+  decision-making algorithm.
+
+Finally, if you're contributing to Decisions.jl, or you don't mind some unnecessary
+dependencies, the package **`Decisions`** itself reexports all names from the packages listed
+above, so you can just write `using Decisions`.
 
 ## Objectives
 

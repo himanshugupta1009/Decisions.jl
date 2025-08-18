@@ -99,10 +99,10 @@ Due to their internal role they are not exported by default.
 ### Terminality
 
 ```@docs
-Decisions.Terminality
-Decisions.Terminable
-Decisions.NotTerminable
-Decisions.MaybeTerminable
+DecisionNetworks.Terminality
+DecisionNetworks.Terminable
+DecisionNetworks.NotTerminable
+DecisionNetworks.MaybeTerminable
 ```
 
 ## Traits on conditional distributions

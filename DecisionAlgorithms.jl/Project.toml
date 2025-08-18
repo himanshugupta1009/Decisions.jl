@@ -1,0 +1,4 @@
+name = "DecisionAlgorithms"
+uuid = "24462d87-5a31-4c17-8b3b-e3b0ef9969b3"
+authors = ["Mel Krusniak <mel.krusniak@vanderbilt.edu>", "Jackson Wagner <jackson.wagner-1@colorado.edu>", "Kyle Wray <k.wray@northeastern.edu>", "Zachary Sunberg <zachary.sunberg@colorado.edu>", "Tyler Becker <tyler.becker-1@colorado.edu>"]
+version = "0.0.1"

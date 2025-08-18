@@ -7,6 +7,27 @@ drop as transformations are aggregated. As such, they are considered unstable an
 to be subject to significant additional refactoring.
 
 ```@docs
-Decisions.RenamedDist
-Decisions.MergedDist
+DecisionNetworks.RenamedDist
+DecisionNetworks.MergedDist
+```
+
+
+## Tools for traversing DecisionNetworks
+These are the tools used at compile time to generate fast sampling code and nonambiguous
+networks.
+
+```@docs
+DecisionNetworks._standardize_dn_type
+DecisionNetworks._crawl_dn
+DecisionNetworks._node_order
+DecisionNetworks._make_node_assignment
+DecisionNetworks._make_node_initialization
+```
+
+## Utilities
+
+```@docs
+DecisionNetworks._sortkeys
+DecisionNetworks._sorted_tuple
+
 ```

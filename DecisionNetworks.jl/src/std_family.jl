@@ -174,7 +174,7 @@ over the possible decision graphs is defined. Otherwise, a single decision graph
 """
 macro markov_alias(name, abstract_traits)
     quote
-        Core.@__doc__ const $name = Decisions.markov_type($abstract_traits)
+        Core.@__doc__ const $name = DecisionNetworks.markov_type($abstract_traits)
 
         # function $name(plates=(;); kwargs...)
         #     behavior = NamedTuple(kwargs)
@@ -209,7 +209,7 @@ macro markov_edge(edge, pattern...)
     end
 
     block = quote
-        function markov_edge(::$input, ::$output, markov_traits::Decisions.MarkovTraits)
+        function markov_edge(::$input, ::$output, markov_traits::DecisionNetworks.MarkovTraits)
             markov_edge($input(), $output(), $(trait_vals...))
         end
     end 
@@ -240,7 +240,7 @@ macro markov_node(node, pattern...)
     end
 
     block = quote
-        function markov_node(::$output, markov_traits::Decisions.MarkovTraits)
+        function markov_node(::$output, markov_traits::DecisionNetworks.MarkovTraits)
             markov_node($output(), $(trait_vals...))
         end
     end 

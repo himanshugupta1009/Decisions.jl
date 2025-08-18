@@ -1,5 +1,5 @@
 ```@setup trans
-using Decisions
+using DecisionNetworks
 ```
 
 # Transformations
@@ -49,7 +49,7 @@ player game.
 ```@example trans
 my_mg = MG_DN{(; i=2)}(;
     sp = (rng; a, s) -> "sp for actions $a",
-    r = (rng; a, s, sp, i) -> "r$i"
+    r = (rng; a, s, sp, i) -> "r$i" 
 )
 ```
 

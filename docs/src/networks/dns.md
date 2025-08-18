@@ -1,5 +1,5 @@
 ```@setup dns
-using Decisions
+using DecisionNetworks
 ```
 
 # Decision networks
@@ -17,12 +17,13 @@ In Decisions.jl, DNs consist of two components:
 * An **implementation**, which provides some of the conditional distributions in the network.
   Nodes with no implemented distribution are considered _decision nodes_. 
 
-The decision graph is given by the `Type{<:DecisionNetwork}`, meaning that computation
-regarding the structure of a DN can be done at compile time. `DecisionNetwork` instances
-carry `implementation` as well.
+The decision graph is given by the `Type{<:DecisionNetwork}` (aliased to `DecisionGraph` for
+convenience), meaning that computation regarding the structure of a DN can be done at
+compile time. `DecisionNetwork` instances carry `implementation` as well.
 
 ```@docs
 DecisionNetwork
+DecisionGraph
 implementation
 ```
 
