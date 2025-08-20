@@ -2,7 +2,7 @@
 using DecisionNetworks
 ```
 
-# Decision networks
+# Using decision networks
 
 The fundamental unit of problem description in Decisions.jl is the (dynamic) _decision
 network_ or (D)DN (variously related to or synonymous with "influence diagram," "generalized
@@ -81,22 +81,6 @@ An entire DN or DDN can be sampled given inputs with `sample`:
 
 ```@docs
 sample
-```
-
-## Using DN structure
-
-The structures underlying decision networks - that is, decision graphs - are represented
-with (1) an input => output definition for each node, (2) mappings from current-iterate to
-next-iterate nodes (for a dynamic decision network), and (3) sizes for each [plate](@ref).
-They can all be queried of both `DecisionNetwork`s and `Type{<:DecisionNetwork}`s.
-
-```@docs
-    nodes
-    dynamic_pairs
-    ranges
-    node_names
-    next
-    prev
 ```
 
 ## Traits on decision networks

@@ -24,7 +24,15 @@ DecisionNetworks._make_node_assignment
 DecisionNetworks._make_node_initialization
 ```
 
+## Random variable groups
+
+```@docs
+DecisionNetworks.RVGroup
+DecisionNetworks.expr
+```
+
 ## Utilities
+Simple utilities used across the project:
 
 ```@docs
 DecisionNetworks._sortkeys

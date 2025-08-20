@@ -9,8 +9,6 @@ complex problems unifying decision-, control-, and game-theoretic models.
 
 Decisions.jl is a work in progress. Please report issues and feature requests [on Github](https://github.com/JuliaDecisionMaking/Decisions.jl/issues).
 
-##
-
 Decisions.jl is factored into three framework packages:
 
 * [**`DecisionNetworks.jl`**](@ref) (closed beta) provides fundamental tools for the
