@@ -18,7 +18,7 @@ abstract type DecisionMetric end
 
 Aggregate values in the NamedTuple `values` into the metric.
 """
-function aggregate end
+function aggregate! end
 
 (dm::DecisionMetric)(values) = aggregate!(dm, values)
 
@@ -40,14 +40,14 @@ function reset! end
 """
     Discounted{id} <: DecisionMetric
 
-Metric which aggregates a value labelled `id` in a discounted manner: every subsequent
-`aggregate!` increases the discount.
+Metric which aggregates a value labelled `id` as a discounted summation: every subsequent
+`aggregate!` increases the discount and decreases the impact of future calls.
 
 Discounting is forward-directed; that is, it is assumed that the first call to 
-`aggregate!` is the most impactful.
+`aggregate!` is the least discounted.
 """
-#TODO: Doesn't make sense for semi-Markov; discount rate vs factor
 mutable struct Discounted{id} <: DecisionMetric
+    #TODO: Doesn't make sense for semi-Markov; discount rate vs factor
     discount::Float64
     cuml_discount::Float64
     agg::Float64
@@ -67,6 +67,11 @@ end
 
 output(dm::Discounted) = dm.agg
 
+"""
+    const DiscountedReward
+
+Alias for `Discounted{:r}`.
+"""
 const DiscountedReward = Discounted{:r}
 
 
@@ -113,16 +118,12 @@ end
 
 
 """
-    NeverStop
+    MaxIters <: DecisionMetric 
+    MaxIters(max_t)
 
-A metric that aggregates nothing and always outputs `false`.
+A metric that outputs `true` until it has been called `max_iters` times, after which it
+outputs `false`.
 """
-struct NeverStop <: DecisionMetric end
-aggregate!(::NeverStop, values) = nothing
-reset!(::NeverStop) = nothing
-output(::NeverStop) = false
-
-
 mutable struct MaxIters <: DecisionMetric 
     t::Int
     max_t::Int

@@ -14,6 +14,7 @@ using NetworkLayout
 include("terminal.jl")
 export Terminal
 export terminal
+export isterminal
 
 include("hints.jl")
 export DecisionsTrait
@@ -117,11 +118,6 @@ export sample
 export next
 export prev
 export graph
-
-include("terminal.jl")
-export Terminal
-export terminal
-export isterminal
 
 include("transformations.jl")
 export DNTransformation

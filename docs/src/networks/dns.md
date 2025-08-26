@@ -2,7 +2,7 @@
 using DecisionNetworks
 ```
 
-# Using decision networks
+# Decision networks
 
 The fundamental unit of problem description in Decisions.jl is the (dynamic) _decision
 network_ or (D)DN (variously related to or synonymous with "influence diagram," "generalized

@@ -43,14 +43,3 @@ Decisions.jl is designed to be, in this order:
 * **Fast**. Almost all of the overhead computation Decisions.jl uses to handle general
   decision networks is compile-time. Once compiled, all decision problems are first class,
   as efficiently used and sampled as any other.
-
-## Contents
-```@contents
-Pages = [
-    "networks/dns.md"
-    "networks/conditional_dists.md"
-    "networks/spaces.md"
-    "networks/traits.md"
-]
-Depth = 2
-```
