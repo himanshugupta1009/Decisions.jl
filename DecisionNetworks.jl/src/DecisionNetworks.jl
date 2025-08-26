@@ -106,6 +106,7 @@ export DecisionNetwork
 
 export nodes
 export node_names
+export children
 export dynamic_pairs
 export ranges
 export implementation

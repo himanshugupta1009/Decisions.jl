@@ -68,5 +68,5 @@ dnplot(DecPOMDP_DN)
 
 Since only `DecisionNetworks` carry node implementations, without which it is impossible to
 distinguish between action and chance nodes, all nodes in `DecisionGraphs` are rendered
-(somewhat arbitrarily) as empty hexagons.
+as hexagons.
 

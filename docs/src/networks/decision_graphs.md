@@ -1,3 +1,7 @@
+```@setup dgs
+using DecisionNetworks
+```
+
 # Decision graphs
 
 Decision graphs are `Type`s of decision networks. More specifically, they are directed
@@ -146,11 +150,33 @@ For instance, we might want to define a mixed observability Markov decision prob
 memory node. MOMDP networks aren't standard Markov networks due to the factored state, so we
 should just define them manually:
 
-```@example
-MOMDP = DecisionGraph(
-
-
+```@example dgs
+const MOMDP = DecisionGraph(
+  [ # Six regular nodes (:xp, :yp, :r, :o, :mp, :a)
+    (Dense(:x), Dense(:y), Dense(:a)) => Joint(:xp),
+    (Dense(:x), Dense(:y), Dense(:a), Dense(:xp)) => Joint(:yp),
+    (Dense(:x), Dense(:y), Dense(:a)) => Joint(:r),
+    (Dense(:x), Dense(:y), Dense(:a)) => Joint(:o),
+    (Dense(:x), Dense(:o), Dense(:a), Dense(:m)) => Joint(:mp),
+    (Dense(:m),) => Joint(:a),
+  ],
+  (; # Three dynamic nodes (:x, :y, :m)
+    :x => :xp,
+    :y => :yp,
+    :m => :mp
+  ),
+  (;) # No ranges
 )
+
+# Create a MOMDP with no node implementations at all
+my_empty_MOMDP = MOMDP(;)
+```
+
+To visually double-check that your new decision graph is correct, use [`dnplot`](@ref) (though be
+aware that networks with many nodes may render poorly):
+
+```@example dgs
+dnplot(MOMDP)
 ```
 
 !!! tip

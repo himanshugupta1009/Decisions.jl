@@ -54,6 +54,8 @@ function dnplot(dg::Union{DecisionGraph, DecisionNetwork}; kws...)
     # 1: Dynamically updated nodes should be readable left-to-right with their counterparts
     #   Unfortunately since GraphRecipes became part of Plots the pinning functionality
     #   is no longer exposed. So we have to do it in a roundabout way
+
+    max_order = maximum([_node_order(dg, s) for s in node_names(dg)])
     pin_dict = Dict() # unspecified type
     for (y, (rv, rvp)) in enumerate(pairs(dynamic_pairs(dg)))
         pin_dict[rv]  = (-1, y)
@@ -131,8 +133,7 @@ function dnplot(dg::Union{DecisionGraph, DecisionNetwork}; kws...)
     )
 end
 
-_nodecolor(::DecisionGraph, s) = :white
-_nodecolor(dn::DecisionNetwork, s) = (s ∈ keys(nodes(dn))) ? :lightgray : :white
+_nodecolor(dn, s) = (s ∈ keys(nodes(dn))) ? :lightgray : :white
 
 _nodeoutline(::DecisionGraph) = :dot
 _nodeoutline(::DecisionNetwork) = :solid
