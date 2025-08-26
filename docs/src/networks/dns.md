@@ -17,9 +17,10 @@ In Decisions.jl, DNs consist of two components:
 * An **implementation**, which provides some of the conditional distributions in the network.
   Nodes with no implemented distribution are considered _decision nodes_. 
 
-The decision graph is given by the `Type{<:DecisionNetwork}` (aliased to `DecisionGraph` for
-convenience), meaning that computation regarding the structure of a DN can be done at
-compile time. `DecisionNetwork` instances carry `implementation` as well.
+The decision graph lives in type space: it is given by the `Type{<:DecisionNetwork}`
+(aliased to `DecisionGraph`). This allows Decisions.jl to perform computation about the
+structure of a DN at compile time. `DecisionNetwork` instances additionally carry
+`implementation` information.
 
 ```@docs
 DecisionNetwork
@@ -36,8 +37,8 @@ constructor for a `Type{<:DecisionNetwork}`. (The `Type{<:DecisionNetwork}` itse
 decision graph - which tells us how these random variables condition each other.)
 
 There are several ways to get a `Type{<:DecisionNetwork}` that can be instantiated. For
-instance, we might use the premade `MDP_DN` network type: it is the the decision graph
-underlying all Markov decision processes:
+instance, we might use the premade [`MDP_DN`](@ref) network type, which underlies Markov
+decision processes:
 
 
 ```@example dns
@@ -50,7 +51,7 @@ my_dn = MDP_DN(;
 !!! tip
 
     `Function`s and `Space`s that are passed to the constructor as implementations for 
-    distributions are [automatically `convert`ed to `ConditionalDist`s](@ref).
+    distributions are [automatically `convert`ed to `ConditionalDist`s](@ref "Objects that `convert` to `ConditionalDist`s").
 
 The pretty-printed output tells us something about the DN: it has nodes named `a`, `r`, `s`,
 and `sp`, it has the given conditionings for those nodes, and it's a DDN where `sp` becomes
@@ -60,9 +61,11 @@ and `sp`, it has the given conditionings for those nodes, and it's a DDN where `
 parentheses, we see that we've provided implementations for `r` and `sp`, but `a` has no
 implementation; that is, it is a decision node.
 
-The prenamed decision network types defined by DecisionNetworks.jl cover the most commonly
-used networks, but later sections in this documentation deal with [types for arbitrary
-networks](@ref), which is where DecisionNetworks shines.
+Note that the type `MDP_DN` - that is, the decision graph - tells us everything there is to
+know about the network _structure_ of an MDP. The prenamed decision network types defined by
+DecisionNetworks.jl cover a few commonly used network structures, but later sections in this
+documentation also deal with [defining arbitrary decision graphs](@ref "Defining decision
+graphs").
 
 
 ## Sampling DNs
@@ -75,25 +78,27 @@ my_dn[:sp]
 
 This gives the conditional distribution for `sp` in this DDN (that is, the state
 transition). All sorts of useful functions for algorithm writers are defined on conditional
-distributions, documented on [their own manual page](@ref).
+distributions, documented on [their own manual page](@ref "Conditional distributions").
 
-An entire DN or DDN can be sampled given inputs with `sample`:
+An entire DN or DDN can be sampled given inputs with `sample`. In particular, the `behavior`
+argument is used to provide implementations for all distributions not already implemented in
+the network: that is, implementations for the action nodes.
 
 ```@docs
 sample
 ```
 
-## Traits on decision networks
+## Decision network traits
 
 Decisions.jl defines a number of traits on various objects, especially decision networks.
 They are implemented using [the Holy trait
 pattern](https://discourse.julialang.org/t/holy-traits-vs-boolean-traits/111954). The full
-documentation for each trait is available [here](@ref).
+documentation for all traits is available [here](@ref "Traits on decision networks").
 
 Traits on decision networks are used to give an exact idea of how particular semantic
 concepts, like "partial observability" and "sequentiality", correspond to actual decision
-networks. Some of these traits can be used for [defining new decision networks](@ref)
-conveniently and easily.
+networks. [These traits can be combined to form new networks](@ref "Standard Markov family
+networks").
 
 
 !!! todo

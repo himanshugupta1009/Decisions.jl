@@ -79,6 +79,22 @@ This mimics the statistical syntax $x \sim p_{\textrm{my_dist}}(\cdot | a, b)$ a
 $p_{\textrm{my_dist}}(x | a, b)$ respectively, with the semicolon replacing the vertical
 bar.
 
+### `Terminal` states (and other outputs)
+Sometimes a distribution is provided with conditions that represent an exceptional,
+simulation-halting "terminal" case (i.e., a "terminal state"). Under these conditions,
+distributions are expected to return the unique value `terminal`, which is not included
+in the distribution support. 
+
+The [`Terminality`](@ref) trait can be used to signal that a distribution in a DN should
+never produce `terminal`. 
+
+```@docs
+Terminal
+terminal
+isterminal
+```
+
+
 ## Defining conditional distributions
 There are several ways to define and instantiate `ConditionalDists`. 
 

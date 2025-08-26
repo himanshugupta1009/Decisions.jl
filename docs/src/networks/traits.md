@@ -56,6 +56,7 @@ MemoryAbsent
 RewardStyle
 NoReward
 SingleReward
+MultipleRewards
 DefiniteRewards
 IndefiniteRewards
 ```

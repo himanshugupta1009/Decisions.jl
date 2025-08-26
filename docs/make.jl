@@ -23,6 +23,7 @@ makedocs(
             "networks/transformations.md",
             "networks/visualization.md",
             "networks/interoperability.md",
+            "networks/faqs.md",
         ],
         "DecisionProblems.jl" => [
 

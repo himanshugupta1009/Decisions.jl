@@ -12,10 +12,10 @@ their conditions:
 ```@example viz
 DecPOMDP_DN((; i = 4); sp = (; a, s) -> "successor state")
 ```
-Ordinary random variables are shown with a conditioning bar. If they have an implemented
-conditional distribution in the network, the type of the distribution is shown. Past-iterate
-/ future-iterate random variable pairs are denoted with `=>`, and indexing variables are
-shown denoted with `∈`.
+Ordinary random variables are shown with a conditioning bar. If there is a corresponding
+conditional distribution implemented in the network, the type of the distribution is shown.
+Past-iterate / future-iterate random variable pairs are denoted with `=>`, and indexing
+variables are shown denoted with `∈`.
 
 Plates which are independently sampled over one or more indices are shown with those indices
 in array notation. Similarly, [`Parallel`](@ref) conditionings are also shown with their

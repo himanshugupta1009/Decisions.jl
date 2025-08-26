@@ -97,10 +97,11 @@ vast majority of decision problems used today - can be defined using only six no
 inputs:
 
 * `s`: Current state
-* `m`: Current [memory](@ref)
-* `sp`: Successor state; that is, **s**tate-**p**rime. The distribution that implements it is often called the
-  _transition_. Dynamically paired with `s`.
-* `mp`: Successor [memory](@ref); that is, **m**emory-**p**rime (a decision node).  
+* `m`: Current [memory](@ref "What exactly are the `m`/`mp` nodes?")
+* `sp`: Successor state; that is, **s**tate-**p**rime. The distribution that implements it
+  is often called the _transition_. Dynamically paired with `s`.
+* `mp`: Successor [memory](@ref "What exactly are the `m`/`mp` nodes?"); that is,
+  **m**emory-**p**rime (a decision node).  
 * `a`: Action (a decision node).
 * `r`: Reward
 * `o`: Observation
@@ -122,7 +123,7 @@ for defining these types of networks based on the [relevant traits](@ref "Traits
 ### Named network types
 
 A few exceptionally important decision graphs have aliases provided by Decisions.jl. They
-are all members of the [standard Markov family](@ref).
+are all members of the [standard Markov family](@ref "Standard Markov family networks").
 
 ```@docs
   MDP_DN
@@ -131,7 +132,7 @@ are all members of the [standard Markov family](@ref).
   DecPOMDP_DN
 ```
 
-You can use [transformations](@ref) to transform these networks into your specific target.
+You can use [transformations](@ref "Transformations") to transform these networks into your specific target.
 
 
 ## Defining networks by hand

@@ -97,10 +97,11 @@ For variety, we'll operate on the `DecisionGraph` `POMDP_DN` rather than the `De
 node_names(POMDP_DN)
 ```
 
-Notice that we include the ["memory nodes"](@ref) `m` and `mp` by default here. One might
-expect to be able to simply `MergeForward` the memory and observation nodes, removing all
-the partial-observability machinery, to reach a model where `a` is directly conditioned on
-`s`. However, in reality, we see something slightly different:
+Notice that we include the ["memory nodes"](@ref "What exactly are the `m`/`mp` nodes?") `m`
+and `mp` by default here. One might expect to be able to simply `MergeForward` the memory
+and observation nodes, removing all the partial-observability machinery, to reach a model
+where `a` is directly conditioned on `s`. However, in reality, we see something slightly
+different:
 
 ```@example trans
 My_DN = POMDP_DN |> MergeForward(:m, :mp, :o)

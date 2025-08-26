@@ -43,6 +43,7 @@ export MemoryAbsent
 
 export RewardStyle
 export SingleReward
+export MultipleRewards
 export DefiniteRewards
 export IndefiniteRewards
 export NoReward
@@ -116,6 +117,11 @@ export sample
 export next
 export prev
 export graph
+
+include("terminal.jl")
+export Terminal
+export terminal
+export isterminal
 
 include("transformations.jl")
 export DNTransformation
