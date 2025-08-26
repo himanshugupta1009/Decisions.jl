@@ -106,7 +106,7 @@ end
 
 function transform(trans::Recondition, dg::DecisionGraph)
     for key in keys(trans.new_nodes)
-        if key ∉ node_names(dg)
+        if key ∉ keys(nodes(dg))
             throw(ArgumentError("Node $key not found in decision graph"))
         end
     end
@@ -255,7 +255,7 @@ function transform(trans::IndexExplode, dn::DecisionNetwork)
                 old_rv_in = name(old_input)
 
                 # Option 1: This input is not a node
-                if old_rv_in ∉ node_names(dn) 
+                if old_rv_in ∉ keys(nodes(dn))
                     #TODO - no plates on dynamic nodes right now
                     continue
                 end
@@ -356,7 +356,7 @@ function transform(trans::MergeForward, dg::DecisionGraph)
             if ! isnothing(collapsing_input_group_idx)
                 collapsing_input_group = current_node[1][collapsing_input_group_idx]
                 # If this random variable has an associated node (isn't a DN input)
-                if collapsing_rv ∈ node_names(dg)
+                if collapsing_rv ∈ keys(nodes(dg))
                     # ... then push all its conditions forward
                     for carry_input_group in nodes(dg)[collapsing_rv][1]
                         carry_rv = name(carry_input_group)

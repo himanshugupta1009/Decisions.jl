@@ -7,6 +7,10 @@ using ExprTools
 using StaticArrays
 using Memoization
 
+
+using Graphs
+using NetworkLayout
+
 include("terminal.jl")
 export Terminal
 export terminal
@@ -127,6 +131,15 @@ export Rename
 include("show.jl")
 include("std_family.jl")
 include("std_networks.jl")
+
+export MDP_DN
+export POMDP_DN
+export MG_DN
+export DecPOMDP_DN
+
+include("visualization.jl")
+export dnplot
+export as_graphs_jl
 
 
 export @markov_edge

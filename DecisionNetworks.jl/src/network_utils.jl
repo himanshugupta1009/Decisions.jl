@@ -86,12 +86,12 @@ end
 Calculate the order of the random variable named `rv` in decision network `dn`; that is,
 `n` such that `rv` is conditioned on random variables of at most order `n-1`. 
 """
-function _node_order(dn, node; traversed=[])
-    if node ∈ keys(ranges(dn))
+function _node_order(dg, node; traversed=[])
+    if (! isnothing(ranges(dg))) && (node ∈ keys(ranges(dg)))
         # indexing variables are always known with no ancestors
         return -1 
     end
-    if ((! (node ∈ dn)) || isempty(conditions(dn, node)))
+    if ((! (node ∈ dg)) || isempty(conditions(dg, node)))
         # Node is an input or unconditioned
         return 0
     end
@@ -100,7 +100,7 @@ function _node_order(dn, node; traversed=[])
         return Inf
     end
     traversed = [traversed; node]
-    1 + maximum([_node_order(dn, c; traversed) for c in conditions(dn, node)])
+    1 + maximum([_node_order(dg, c; traversed) for c in conditions(dg, node)])
 end
 
 """

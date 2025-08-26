@@ -1,9 +1,18 @@
 # Decision graphs
 
-Decision graphs are `Type`s of decision network: that is, they are directed acyclic graphs
-without any implementations for the conditional distributions backing the nodes (until they
-are instantiated into a decision network). DecisionNetworks.jl provides a rich language for
-modifying these decision graphs to define new problem frameworks.
+Decision graphs are `Type`s of decision networks. More specifically, they are directed
+acyclic graphs without any implementations for the conditional distributions backing the
+nodes. Decisions.jl uses decision graphs to compile optimized code for any particular kind
+of decision network. Additionally, DecisionNetworks.jl allows for modifying these decision
+graphs to define new problem frameworks. As such, decision graphs are imbued with
+significantly more functionality than Julia types in general.
+
+One can extract the decision graph from a decision network using `graph`, or just plain old
+`typeof`.
+
+```@docs
+graph
+```
 
 ## Structure of decision graphs
 
@@ -55,9 +64,16 @@ They can all be queried of both `DecisionNetwork`s and `Type{<:DecisionNetwork}`
     nodes
     dynamic_pairs
     ranges
-    node_names
-    next
-    prev
+```
+
+A number of convenience functions are also provided to make navigating `DecisionGraph`s
+slightly easier:
+
+```@docs
+node_names
+children
+next
+prev
 ```
 
 ## Defining decision graphs
@@ -108,9 +124,10 @@ are all members of the [standard Markov family](@ref).
   MDP_DN
   POMDP_DN
   MG_DN
+  DecPOMDP_DN
 ```
 
-You can use [transformations](@ref) to transform these networks into their siblings.
+You can use [transformations](@ref) to transform these networks into your specific target.
 
 
 ## Defining networks by hand
@@ -124,6 +141,22 @@ A new type of decision network can be defined with the `DecisionGraph` construct
   output (as a `Plate`). 
 * `dynamic_pairs` is a NamedTuple mapping current-iterate to future-iterate node names.
 * `ranges` is a NamedTuple mapping indexing variable names to lengths.
+
+For instance, we might want to define a mixed observability Markov decision problem with a
+memory node. MOMDP networks aren't standard Markov networks due to the factored state, so we
+should just define them manually:
+
+```@example
+MOMDP = DecisionGraph(
+
+
+)
+```
+
+!!! tip
+
+    For performance reasons, when defining a new decision graph for use later, it's
+    recommended to mark it as `const`.
 
 !!! warning
 

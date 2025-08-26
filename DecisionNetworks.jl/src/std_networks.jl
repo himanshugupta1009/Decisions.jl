@@ -50,8 +50,6 @@ const _Traits = MarkovAmbiguousTraits
 # @markov_alias CorrNFG_DN      _Traits(@NAgents, @Comp, @ARwd)
 # @markov_alias RG_DN           _Traits(@NAgents, @UnCorr, @Comp, @ARwd, @YesMem)
 
-# Single agent problems
-
 
 
 
@@ -63,17 +61,15 @@ Canonical decision network underlying a Markov decision process.
 Assumes the memory node is not present and the reward is conditioned on `(:s, :a, :sp)`.
 """
 @markov_alias MDP_DN       _Traits(@HasS, @OneAgent, @NoMem, @SARwd)
-export MDP_DN
 
 """
     POMDP_DN
 
 Canonical decision network underlying a partially observable Markov decision process.
 
-Assumes the memory node is not present and the reward is conditioned on `(:s, :a, :sp)`.
+Assumes the memory node is present and the reward is conditioned on `(:s, :a, :sp)`.
 """
 @markov_alias POMDP_DN     _Traits(@HasS, @OneAgent, @YesMem, @SARwd, @PObs)
-export POMDP_DN
 
 
 
@@ -96,7 +92,15 @@ Canonical decision network underlying a Markov game.
 
 """
 @markov_alias MG_DN          _Traits(@HasS, @NAgents, @UnCorr, @NoMem, @DeCentr, @Comp, @SARwd)
-export MG_DN
+
+
+"""
+    DecPOMDP_DN
+
+Canonical decision network underlying a decentralized partially observable Markov decision
+process.
+"""
+@markov_alias DecPOMDP_DN    _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @SARwd)
 
 
 # @markov_alias SMG_DN         _Traits(@HasS, @NAgents, @UnCorr, @AnyMem, @DeCentr, @Comp, @SARwd, @Semi)
@@ -107,7 +111,6 @@ export MG_DN
 # # # # Multi agent partially observable problems
 # @markov_alias MPOMDP_DN      _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @SARwd)
 # @markov_alias MPOSMDP_DN     _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @SARwd, @Semi)
-# @markov_alias DecPOMDP_DN    _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @SARwd)
 # @markov_alias DecPOSMDP_DN   _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @SARwd, @Semi)
 # @markov_alias POMG_DN        _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @Comp, @SARwd)
 # @markov_alias POSMG_DN       _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @Comp, @SARwd, @Semi)

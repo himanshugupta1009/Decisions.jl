@@ -26,10 +26,15 @@ struct DecisionNetwork{nodes, dynamic_pairs, ranges, B<:NamedTuple}
 end
 
 """
-    const DecisionGraph
+    const DecisionGraph = Type{<:DecisionNetwork}
+    DecisionGraph(nodes, dynamic_pairs=nothing, ranges=nothing)
 
 A decision graph: the graph structure of a decision network, with none of the distributions
-implemented.
+implemented. 
+
+If `dynamic_pairs` or `ranges` is `nothing`, the corresponding `DecisionNetwork` type
+parameter is left unspecified. (This way, it is possible to define a `DecisionGraph`
+without knowing the dynamic pairs or ranges ahead of time.) 
 """
 const DecisionGraph = Type{<:DecisionNetwork}
 
@@ -104,10 +109,10 @@ implementation(dn::DecisionNetwork) = dn.implementation
     node_names(::DecisionGraph)
     node_names(::DecisionNetwork)
 
-Give the names (as Symbols) of all nodes in a decision network.
+Give the names (as Symbols) of all random variables in a decision network.
 """
-node_names(dn::DecisionGraph) = keys(nodes(dn))
-node_names(dn::DecisionNetwork) = keys(nodes(dn))
+node_names(dn::DecisionGraph) = (keys(nodes(dn))..., keys(dynamic_pairs(dn))...)
+node_names(dn::DecisionNetwork) = (keys(nodes(dn))..., keys(dynamic_pairs(dn))...)
 
 
 """
@@ -118,6 +123,10 @@ Give the names of the conditioning variables of `s` in `dn` (including any index
 variables).
 """
 function conditions(dn::DecisionGraph, s::Symbol) 
+    if s ∈ keys(dynamic_pairs(dn))
+        return (dynamic_pairs(dn)[s],)
+    end
+
     c = [
         [name(n) for n in nodes(dn)[s][1]]...;
         indices(nodes(dn)[s][2])...
@@ -125,9 +134,22 @@ function conditions(dn::DecisionGraph, s::Symbol)
     _sorted_tuple(c)
 end
 
-function conditions(dn::T, s::Symbol) where {T <: DecisionNetwork}
-    conditions(T, s)
+conditions(dn::T, s::Symbol) where {T <: DecisionNetwork} = conditions(T, s)
+
+"""
+    children(dn::DecisionGraph, s::Symbol)
+    children(dn::DecisionNetwork, s::Symbol)
+
+Give the names of all nodes in `dn` that are conditioned on `s`.
+"""
+function children(dn::DecisionGraph, s::Symbol)
+    filter(node_names(dn)) do rv
+        s ∈ conditions(dn, rv)
+    end
 end
+
+children(::T, s::Symbol) where {T <: DecisionNetwork} = children(T, s)
+
 
 
 Base.getindex(dp::DecisionNetwork, rv::Symbol) = implementation(dp)[rv]
