@@ -10,7 +10,7 @@ abstract type ConditionalDist{K, T} end
 """
     Base.eltype(::ConditionalDist{K, T}) where {K, T}
 
-When applied to a ConditionalDist, give `T`, the type of values produced by the
+When applied to a `ConditionalDist`, give `T`, the type of values produced by the
 distribution.
 """
 Base.eltype(::ConditionalDist{K, T}) where {K, T} = T
@@ -157,7 +157,7 @@ macro ConditionalDist(sample_type, block)
                 if kw isa Symbol
                     push!(conditionals_defd_set, kw)
                 else
-                    throw(ParseError("Keyword arguments (conditioning variables) must be \
+                    throw(ArgumentError("Keyword arguments (conditioning variables) must be \
                     explicit in @ConditionalDist. kwargs... and defaults not allowed."))
                 end
             end
@@ -165,7 +165,7 @@ macro ConditionalDist(sample_type, block)
     end
 
     conditionals_defd = Tuple(sort!([conditionals_defd_set...]))
-    kwargs = [Expr(:kw, k, :missing) for k in conditionals_defd]
+    kwargs = [Expr(:kw, k, :nothing) for k in conditionals_defd]
 
     fns_defd = Symbol[]
     fn_block = quote end
@@ -296,12 +296,12 @@ function Base.convert(::Type{ConditionalDist{K}}, f::F) where {K, F<:Function}
 end
 
 function Base.convert(::Type{ConditionalDist{K, T}}, s::Space{<:T}) where {K, T}
-    f = () -> s
+    f = (; kwargs...) -> s
     UndefinedDist{K, T, typeof(f)}(f)
 end
 
 function Base.convert(::Type{ConditionalDist{K}}, s::Space{T}) where {K, T}
-    f = () -> s
+    f = (; kwargs...) -> s
     UndefinedDist{K, T, typeof(f)}(f)
 end
 

@@ -1,5 +1,5 @@
-using Decisions
-using StatsBase
+using DecisionNetworks
+using DecisionProblems
 
 struct GridPointSpace <: Space{Tuple{Int, Int}}
     nrows::Int
@@ -12,7 +12,6 @@ Base.in(p::Tuple{Int, Int}, g::GridPointSpace) =
 Base.length(g::GridPointSpace) = g.nrows * g.ncols
 Base.iterate(g::GridPointSpace) = iterate(Iterators.product(1:g.nrows, 1:g.ncols))
 Base.iterate(g::GridPointSpace, state) = iterate(Iterators.product(1:g.nrows, 1:g.ncols), state)
-
 
 @enum Cardinal NORTH EAST SOUTH WEST
 
@@ -27,7 +26,7 @@ function rel_dirs(s, a)
         (s[1], s[2]+1), (s[1]-1, s[2]), (s[1]+1, s[2])
     elseif a == SOUTH
         (s[1]+1, s[2]), (s[1], s[2]+1), (s[1], s[2]-1)
-    else
+    elseif a == WEST
         (s[1], s[2]-1), (s[1]+1, s[2]), (s[1]-1, s[2])
     end
     (forward, left, right, s)
@@ -36,12 +35,16 @@ end
 function Iceworld(; p_slip, nrows, ncols, holes, target)
     transition = @ConditionalDist Tuple{Int, Int} begin
         function support(; s, a)
-            if ismissing(s) && ismissing(a)
+            if isnothing(s) && isnothing(a)
                 GridPointSpace(nrows, ncols)
             else
+                if s == target
+                    FiniteSpace([terminal]) # TODO: Could productively specialize
+                else
                 FiniteSpace(
-                    [d for d in rel_dirs(kw[:s], kw[:a]) if is_in_bounds(d, nrows, ncols)]
+                    [d for d in rel_dirs(s, a) if is_in_bounds(d, nrows, ncols)]
                 )
+                end
             end
         end
 
@@ -64,67 +67,43 @@ function Iceworld(; p_slip, nrows, ncols, holes, target)
 
         function logpdf(sp; s, a)
             is_in_bounds(sp, nrows, ncols) || return -Inf
+            s == target && return -Inf
             
             forward, left, right, stay = rel_dirs(s, a)
-            if sp == left || sp == right
-                p_slip/2
-            elseif sp == forward
-                1-p_slip
-            elseif sp == stay
-                p_stay = 0
-                p_stay += is_in_bounds(forward, nrows, ncols) ? (1-p_slip) : 0
-                p_stay += is_in_bounds(left,    nrows, ncols) ? (p_slip/2) : 0 
-                p_stay += is_in_bounds(right,   nrows, ncols) ? (p_slip/2) : 0 
-                p_stay
-            else
-                -Inf
-            end |> log
+            p_f = is_in_bounds(forward, nrows, ncols) ? (1-p_slip) : 0.0
+            p_l = is_in_bounds(left,    nrows, ncols) ? (p_slip/2) : 0.0
+            p_r = is_in_bounds(right,   nrows, ncols) ? (p_slip/2) : 0.0
+            p_s = 1 - (p_f + p_l + p_r)
+            sp == forward && return log(p_f)
+            sp == left    && return log(p_l)
+            sp == right   && return log(p_r)
+            log(p_s)
         end
     end
 
+    println(holes)
 
-    reward = @ConditionalDist Real begin
+    reward = @ConditionalDist Float64 begin
         function rand(rng; s, a, sp)
-            if sp == target
+            if s == target
                10
-            elseif sp ∈ holes
+            elseif s ∈ holes
                 -20
             else 
-                -0.01
+                -0.001
             end
         end
     end
 
-    Decisions.MDP_DN(;
+    initial_state = @ConditionalDist @NamedTuple{s::Tuple{Int, Int}} begin
+        function rand(rng)
+            (;s=(1, 1))
+        end
+    end
+
+    MDP(DiscountedReward(0.99), initial_state;
         sp=transition,
         r=reward,
         a=FiniteSpace([NORTH, SOUTH, EAST, WEST])
     )
-end
-
-mdp = Iceworld(; p_slip=0.3, nrows=5, ncols=5, holes=(), target=(5, 5))
-
-
-
-struct MyGridworldAgent <: DecisionAgent
-    model::DecisionNetwork
-end
-
-function Decisions.behavior(::MyGridworldAgent, params)
-    a = @ConditionalDist Cardinal begin
-        rand(rng; s) = StatsBase.sample([keys(params)...], Weights([values(params)...]))
-    end
-    (; a)
-end
-
-function Decisions.init_parameters(::MyGridworldAgent, hparams=nothing)
-    Dict(NORTH=>2.0, SOUTH=>1.0, EAST=>1.0, WEST=>2.0)
-end
-
-function Decisions.update_parameters(::MyGridworldAgent, params, data, hparams=nothing)
-    params[NORTH] *= 0.99
-    params[SOUTH] *= 1.01
-    params[EAST]  *= 1.01
-    params[WEST]  *= 0.99
-    params
 end

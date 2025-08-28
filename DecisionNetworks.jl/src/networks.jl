@@ -151,8 +151,13 @@ end
 children(::T, s::Symbol) where {T <: DecisionNetwork} = children(T, s)
 
 
-
-Base.getindex(dp::DecisionNetwork, rv::Symbol) = implementation(dp)[rv]
+# TODO: Document that index of dynamic input falls through to next-iterate version 
+function Base.getindex(dp::DecisionNetwork, rv::Symbol) 
+    if rv ∈ keys(dynamic_pairs(dp))
+        rv = dynamic_pairs(dp)[rv]
+    end
+    implementation(dp)[rv]
+end
 
 Base.keys(dp::DecisionNetwork) = keys(nodes(dp))
 Base.keys(dp::DecisionGraph) = keys(nodes(dp))
@@ -257,7 +262,7 @@ end
         sym = Meta.quot(rv)
         push!(zeroeth_pass_block.args, :($rv = input[$sym]))
     end
-    for rv in node_names(dn)
+    for rv in keys(nodes(dn))
         init_stmt = _make_node_initialization(dn, rv)
         if ! isnothing(init_stmt)
             push!(zeroeth_pass_block.args, init_stmt)

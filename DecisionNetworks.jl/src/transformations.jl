@@ -121,6 +121,8 @@ function transform(trans::Recondition, dg::DecisionGraph)
     DecisionGraph(new_nodes, dynamic_pairs(dg), ranges(dg))
 end
 
+transform(t::Recondition, dn::DecisionNetwork) = _default_transform(t, dn)
+
 """
     IndexExplode <: DNTransformation
     IndexExplode(idx; sep='_')

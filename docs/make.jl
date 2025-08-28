@@ -9,7 +9,9 @@ DocMeta.setdocmeta!(DecisionProblems, :DocTestSetup, :(using DecisionProblems); 
 makedocs(
     modules = [DecisionNetworks, DecisionProblems],
     format = Documenter.HTML(
-        prettyurls = false                                  # For Local Doc Development
+        assets = ["assets/favicon.ico"],
+        collapselevel = 1,
+        prettyurls = false       ,                           # For Local Doc Development
         #prettyurls = get(ENV, "CI", nothing) == "true"     # For GitHub Deployment
     ),
     sitename = "Decisions.jl",
