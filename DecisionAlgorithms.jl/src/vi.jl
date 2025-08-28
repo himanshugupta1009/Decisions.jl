@@ -2,12 +2,6 @@ struct ValueIteration <: DecisionAlgorithm
     max_iters
 end
 
-# Relaxation solve
-function solve!(alg::ValueIteration, prob::POMDP)
-    mdp = prob |> MergeForward(:m, :mp, :o) |> Recondition(; a=(Dense(:s),))
-    solve!(alg, mdp)
-end
-
 function solve!(alg::ValueIteration, prob::MDP)
     γ = prob.metric.discount
     r0 = zero(support(prob[:r]))
