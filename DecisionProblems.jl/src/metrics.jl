@@ -133,3 +133,10 @@ end
 aggregate!(dm::MaxIters, values) = (dm.t += 1)
 reset!(dm::MaxIters) = (dm.t = 0)
 output(dm::MaxIters) = (dm.t >= dm.max_t)
+
+
+"""
+"""
+mutable struct Constraints{N} <: DecisionMetric
+    
+end
