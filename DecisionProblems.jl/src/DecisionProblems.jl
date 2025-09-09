@@ -26,6 +26,4 @@ include("algorithms.jl")
 include("named_problems.jl")
 export MDP
 
-include("vi.jl")
-
 end

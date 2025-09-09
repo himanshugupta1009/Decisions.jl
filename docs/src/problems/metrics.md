@@ -4,9 +4,9 @@ Decision networks alone have no concepts of solution or objective - they are jus
 environment models. At most, they have action nodes that are not yet implemented, to be
 determined "somewhere else" then used as input to [`sample`](@ref) and the like. 
 
-DecisionProblems.jl provides the missing link. A **decision problem** joins a decision
-network and a **metric**, which indicates an optimization objective over the random
-variables in the network. **Decision algorithms** implement the missing
+DecisionProblems.jl provides the missing link. A _**decision problem**_ joins a decision
+network and a _**metric**_, which indicates an optimization objective over the random
+variables in the network. _**Decision algorithms**_ implement the missing
 distributions in the decision network in order to optimize that metric. 
 
 

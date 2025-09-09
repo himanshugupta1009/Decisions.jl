@@ -118,23 +118,22 @@ end
 
 
 """
-    MaxIters <: DecisionMetric 
-    MaxIters(max_t)
+    NIters <: DecisionMetric 
 
-A metric that outputs `true` until it has been called `max_iters` times, after which it
-outputs `false`.
+A metric that simply tracks the number of times it has been aggregated. 
+
+More efficient for computing episode lengths than `length(output(t::Trace))`.
 """
-mutable struct MaxIters <: DecisionMetric 
+mutable struct NIters <: DecisionMetric 
     t::Int
-    max_t::Int
     MaxIters(max_t) = new(0, max_t)
 end
 
-aggregate!(dm::MaxIters, values) = (dm.t += 1)
-reset!(dm::MaxIters) = (dm.t = 0)
-output(dm::MaxIters) = (dm.t >= dm.max_t)
+aggregate!(dm::NIters, values) = (dm.t += 1)
+reset!(dm::NIters) = (dm.t = 0)
+output(dm::NIters) = dm.t
 
-
+# TODO
 """
 """
 mutable struct Constraints{N} <: DecisionMetric

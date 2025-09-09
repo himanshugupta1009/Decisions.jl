@@ -81,8 +81,6 @@ function Iceworld(; p_slip, nrows, ncols, holes, target)
         end
     end
 
-    println(holes)
-
     reward = @ConditionalDist Float64 begin
         function rand(rng; s, a, sp)
             if s == target

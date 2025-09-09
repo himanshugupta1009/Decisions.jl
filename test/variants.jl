@@ -4,22 +4,17 @@
     Z = (s) -> s + rand()
     R = (s) -> s
 
-    pomdp = POMDP(T, Z, R)
+    pomdp = POMDP_DN(; sp=T, o=Z, r=R)
 
     @test pomdp isa DecisionNetwork
 end
 
 @testset "Disambiguate based on reward conditioning" begin
-    T = (s, a) -> s + a
-    Z = (s) -> s + rand()
-    R_s = (s) -> s
-    R_sa = (s, a) -> s
-    p_s = POMDP(T, Z, R_s)
-    p_sa = POMDP(T, Z, R_sa)
+    
+    SA_POMDP_DN = POMDP_DN |> Recondition
 
-
-    uses_sa(m::typeof(p_s)) = false
-    uses_sa(m::typeof(p_sa)) = true
+    uses_sasp(m::POMDP) = false
+    uses_sasp(m::typeof(p_sa)) = true
 
 
     @test ! uses_sa(p_s)
