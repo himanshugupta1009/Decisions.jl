@@ -2,7 +2,7 @@ using Documenter
 using Decisions
 using Random
 
-push!(LOAD_PATH,"..")
+push!(LOAD_PATH, "../src/")
 
 makedocs(
     modules = [DecisionNetworks, DecisionProblems],
