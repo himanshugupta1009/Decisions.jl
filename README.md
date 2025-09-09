@@ -1,6 +1,10 @@
 # Decisions.jl
 ## Definitive decision problems in Julia
 
+> [!WARNING] 
+> Decisions.jl is under active development. It is currently in **silent beta**:
+> publically accessible but not promoted or registered. Expect bugs and breaking changes. 
+
 Decisions.jl is an ecosystem for canonical representations of decision problems, from the
 most basic Markov decision processes, to rich and expressive multi-agent, semi-Markov,
 multi-objective extensions, unifying decision-, control-, and game-theoretic models.
