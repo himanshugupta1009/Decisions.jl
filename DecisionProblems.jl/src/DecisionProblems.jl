@@ -13,7 +13,7 @@ export reset!
 export Discounted
 export DiscountedReward
 export Trace
-export MaxIters
+export NIters
 
 include("problems.jl")
 export DecisionProblem
