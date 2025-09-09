@@ -15,7 +15,7 @@ jobs:
           julia --project=docs -e '
             import Pkg; Pkg.add("Documenter")
             using Pkg
-            Pkg.develop("..")
+            Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()'
       - run: |
           julia --project=docs -e '
