@@ -1,12 +1,8 @@
 using Documenter
-using DecisionNetworks
-using DecisionProblems
+using Decisions
 using Random
 
-push!(LOAD_PATH,"../src/")
-
-DocMeta.setdocmeta!(DecisionNetworks, :DocTestSetup, :(using DecisionNetworks); recursive=true)
-DocMeta.setdocmeta!(DecisionProblems, :DocTestSetup, :(using DecisionProblems); recursive=true)
+push!(LOAD_PATH,"..")
 
 makedocs(
     modules = [DecisionNetworks, DecisionProblems],
@@ -47,6 +43,7 @@ makedocs(
 )
 
 deploydocs(
-   repo = "github.com/uliaDecisionMaking/Decisions.jl.git",
-   push_preview=true,
+   repo = "github.com/JuliaDecisionMaking/Decisions.jl.git",
+   push_preview = true,
+   devbranch = "main"
 )

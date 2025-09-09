@@ -56,5 +56,5 @@ provides a number of definitive metrics.
     Discounted
     DiscountedReward
     Trace
-    MaxIters
+    NIters
 ```

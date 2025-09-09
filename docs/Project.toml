@@ -1,4 +1,3 @@
 [deps]
-DecisionNetworks = "a1ae968e-b3ba-4546-81a6-f6e3d3a9391a"
-DecisionProblems = "b716e576-a1f9-415a-b454-baf909aed799"
+Decisions = "3911d90d-9e38-4fe1-910a-415423006358"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"

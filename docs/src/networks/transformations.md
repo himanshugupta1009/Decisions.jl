@@ -1,5 +1,5 @@
 ```@setup trans
-using DecisionNetworks
+using Decisions
 ```
 
 # Transformations

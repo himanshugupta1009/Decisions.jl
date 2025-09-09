@@ -1,7 +1,7 @@
 # Visualization
 
 ```@setup viz
-using DecisionNetworks
+using Decisions
 ```
 
 ## `Base.show`

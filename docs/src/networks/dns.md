@@ -1,5 +1,5 @@
 ```@setup dns
-using DecisionNetworks
+using Decisions
 ```
 
 # Decision networks

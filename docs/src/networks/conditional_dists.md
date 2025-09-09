@@ -1,5 +1,5 @@
 ```@setup cds
-using DecisionNetworks
+using Decisions
 ```
 
 # Conditional distributions

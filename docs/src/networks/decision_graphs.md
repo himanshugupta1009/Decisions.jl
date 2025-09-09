@@ -1,5 +1,5 @@
 ```@setup dgs
-using DecisionNetworks
+using Decisions
 ```
 
 # Decision graphs
