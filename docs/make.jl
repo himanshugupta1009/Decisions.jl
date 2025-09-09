@@ -3,6 +3,8 @@ using Decisions
 using Random
 
 push!(LOAD_PATH, "../src/")
+DocMeta.setdocmeta!(DecisionNetworks, :DocTestSetup, :(using Decisions); recursive=true)
+DocMeta.setdocmeta!(DecisionProblems, :DocTestSetup, :(using Decisions); recursive=true)
 
 makedocs(
     modules = [DecisionNetworks, DecisionProblems],
