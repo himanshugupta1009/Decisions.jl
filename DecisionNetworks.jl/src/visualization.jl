@@ -171,23 +171,3 @@ function _nodemarker(dn::DecisionNetwork, s::Symbol)
         _square_shape
     end
 end
-
-# function _node
-
-
-# positions = NetworkLayout.spring(
-#         adjmat;
-#         dim,
-#         Ptype = T,
-#         iterations = maxiter,
-#         initialtemp = initialtemp,
-#         C = C,
-#         initialpos = startpostions,
-#     )
-
-
-
-# marker(::DNChance) = :circle
-# marker(::DNAction) = :rect
-# marker(::DNReward) = :diamond
-# marker(::DNRepeat) = :circle
