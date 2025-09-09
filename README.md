@@ -34,3 +34,18 @@ If you're contributing to Decisions.jl, or you don't mind some unnecessary
 dependencies, the package `Decisions` itself reexports all names from the packages listed
 above, so you can just write `using Decisions`.
 
+## Installation
+Decisions.jl is not (yet) a registered Julia package. To use it, clone the repo and do:
+```
+julia --project
+] dev path_to_repo
+```
+(in your desired Julia environment) to add it in development mode. Of course, if you're working
+on Decisions.jl itself, no need to do this.
+
+If you'd like a local copy of the Decisions.jl docs for development purposes, do:
+```
+cd ./docs
+julia --project
+include("make.jl")
+```
