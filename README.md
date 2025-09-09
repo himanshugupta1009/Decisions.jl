@@ -1,7 +1,6 @@
 # Decisions.jl
 ## Definitive decision problems in Julia
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://USER_NAME.github.io/PACKAGE_NAME.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://USER_NAME.github.io/PACKAGE_NAME.jl/dev)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliadecisionmaking.github.io/Decisions.jl/dev)
 
 Decisions.jl is an ecosystem for canonical representations of decision problems, from the
 most basic Markov decision processes, to rich and expressive multi-agent, semi-Markov,
