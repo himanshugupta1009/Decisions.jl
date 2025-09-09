@@ -3,6 +3,8 @@ using DecisionNetworks
 using DecisionProblems
 using Random
 
+push!(LOAD_PATH,"../src/")
+
 DocMeta.setdocmeta!(DecisionNetworks, :DocTestSetup, :(using DecisionNetworks); recursive=true)
 DocMeta.setdocmeta!(DecisionProblems, :DocTestSetup, :(using DecisionProblems); recursive=true)
 
