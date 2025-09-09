@@ -44,7 +44,7 @@ makedocs(
     warnonly = [:missing_docs, :cross_references]
 )
 
-#deploydocs(
-#    repo = "github.com/[...].git",
-#    push_preview=true,
-#)
+deploydocs(
+   repo = "github.com/uliaDecisionMaking/Decisions.jl.git",
+   push_preview=true,
+)
