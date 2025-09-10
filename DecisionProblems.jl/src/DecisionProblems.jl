@@ -17,13 +17,18 @@ export NIters
 
 include("problems.jl")
 export DecisionProblem
-export network
+export model
+export objective
 export graph
 export initial
 
 include("algorithms.jl")
+export solve
+export simulate!
 
 include("named_problems.jl")
 export MDP
+export POMDP
+export MG
 
 end

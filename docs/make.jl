@@ -32,14 +32,10 @@ makedocs(
         ],
         "DecisionProblems.jl" => [
             "problems/metrics.md"
-            "problems/algorithms.md"
             "problems/problems.md"
-            "problems/faq.md"
+            "problems/algorithms.md"
 
         ],
-        "DecisionSettings.jl" => [
-
-        ]
     ],
     warnonly = [:missing_docs, :cross_references]
 )
