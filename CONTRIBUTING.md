@@ -7,7 +7,7 @@ contribution and your comments on how the framework could be improved.
 There are several ways you can contribute. In all cases, follow [Github Flow](https://guides.github.com/introduction/flow/):
 
 1. [Fork the repository](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo)
-2. [Create an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue) to discuss the proposed content / changes
+2. [Create an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue) to discuss the proposed content / changes and (if you have rights) assign yourself to it
 3. Make the changes [on the github site](https://docs.github.com/en/github/managing-files-in-a-repository/editing-files-in-your-repository) or [with git on your computer](https://docs.github.com/en/github/getting-started-with-github/set-up-git).
 4. [Open a pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request-from-a-fork) to receive feedback, discuss, and merge the changes.
 
