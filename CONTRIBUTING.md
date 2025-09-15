@@ -54,8 +54,7 @@ improvements to the docs (and even just knowing which parts are confusing is
 very valuable data for us, so don't shy away from opening an issue with the
 `documentation` tag).
 
-We are particularly looking for good [tutorial docs]
-(https://docs.divio.com/documentation-system/) at the moment.
+We are particularly looking for good [tutorial docs](https://docs.divio.com/documentation-system/) at the moment.
 
 
 ## Enhancements to the framework
