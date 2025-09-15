@@ -35,8 +35,7 @@ or serve as templates for other algorithms. Ntoe that you may need to define
 a baseline to test it on as well, which might necessitate defining the
 problem type (see the docs).
 
-You can see our [open issues]
-(https://github.com/JuliaDecisionMaking/Decisions.jl/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22help%20wanted%22%20label%3Abaselines)
+You can see our [open issues](https://github.com/JuliaDecisionMaking/Decisions.jl/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22help%20wanted%22%20label%3Abaselines)
 for the types of baseline solvers we have in mind currently.
 
 
@@ -61,8 +60,7 @@ We are particularly looking for good [tutorial docs]
 
 ## Enhancements to the framework
 
-A [number of our outstanding issues]
-(https://github.com/JuliaDecisionMaking/Decisions.jl/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22help%20wanted%22)
+A [number of our outstanding issues](https://github.com/JuliaDecisionMaking/Decisions.jl/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22help%20wanted%22)
 are labelled `help-wanted`. If you'd like to dive into the internals of the
 project, these are a good place to start. We recommend you try a solver or
 domain first to get a general level of familiarity with the code. (It's more
