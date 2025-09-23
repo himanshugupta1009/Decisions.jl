@@ -5,7 +5,6 @@ using Distributions
 using Random
 using ExprTools
 using StaticArrays
-using Memoization
 
 
 using Graphs
