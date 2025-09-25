@@ -34,7 +34,7 @@ Insert one or more nodes into a decision graph or decision network.
 """
 struct Insert <: DNTransformation 
     nodes
-    Insert(nodes...) = new(node_def.(nodes) |> Tuple)
+    Insert(nodes...) = new(node_def.(nodes) |> Tuple) #?
 end
 
 function transform(trans::Insert, g::DecisionGraph)
