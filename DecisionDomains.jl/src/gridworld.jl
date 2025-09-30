@@ -32,7 +32,7 @@ function rel_dirs(s, a)
     (forward, left, right, s)
 end
 
-function Iceworld(; p_slip, nrows, ncols, holes, target)
+function Iceworld(; p_slip=0.1, nrows=5, ncols=5, holes=[], target=(5,5))
     transition = @ConditionalDist Tuple{Int, Int} begin
         function support(; s, a)
             if isnothing(s) && isnothing(a)
