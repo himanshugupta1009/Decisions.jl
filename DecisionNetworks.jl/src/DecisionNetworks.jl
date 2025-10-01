@@ -5,7 +5,6 @@ using Distributions
 using Random
 using ExprTools
 using StaticArrays
-using Memoization
 
 
 using Graphs
@@ -145,7 +144,8 @@ export dnplot
 export as_graphs_jl
 
 
-export @markov_edge
+export @markov_alias
+export MarkovAmbiguousTraits
 
 
 end # module DecisionNetworks

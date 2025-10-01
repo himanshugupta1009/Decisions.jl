@@ -1,5 +1,7 @@
 module DecisionDomains
 
-greet() = print("Hello World!")
+    using DecisionNetworks
+    using DecisionProblems
 
-end # module DecisionDomains
+    include("gridworld.jl")
+end 
