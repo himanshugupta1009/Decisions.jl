@@ -351,11 +351,6 @@ end
     (PartiallyObservable, Any)        => Joint(:o    ; is_terminable=false)
     (FullyObservable,     Any)        => nothing
 end
-@markov_edge (:sp => :o) Statefulness begin 
-    Stateful      => Dense(:sp)
-    AgentFactored => Parallel(:sp, :i)
-    Stateless     => nothing
-end
 @markov_edge (:τ => :o) TimestepStyle begin 
     SemiMarkov    => Dense(:τ)
     FixedTimestep => nothing
@@ -408,11 +403,6 @@ end
 @markov_node :τ TimestepStyle begin
     SemiMarkov    => Joint(:τ; is_terminable=false)
     FixedTimestep => nothing 
-end
-@markov_edge (:sp => :τ) Statefulness begin
-    Stateful      => Dense(:sp)
-    AgentFactored => Dense(:sp)
-    Stateless     => nothing
 end
 @markov_edge (:a => :τ) Multiagency begin
     MultiAgent  => Dense(:a)
