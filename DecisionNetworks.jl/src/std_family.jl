@@ -360,11 +360,6 @@ end
     SemiMarkov    => Dense(:τ)
     FixedTimestep => nothing
 end
-@markov_edge (:a => :o) Multiagency begin
-    MultiAgent  => Dense(:a)
-    SingleAgent => Dense(:a)
-    NoAgent     => nothing
-end
 @markov_edge (:s => :o) Statefulness begin 
     Stateful      => Dense(:s)
     AgentFactored => Parallel(:s, :i)
