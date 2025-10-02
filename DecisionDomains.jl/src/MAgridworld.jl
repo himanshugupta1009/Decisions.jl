@@ -4,6 +4,7 @@ using Pkg
 using Decisions
 using DecisionNetworks
 using DecisionProblems
+using DecisionDomains
 using StaticArrays
 using Distributions
 using POMDPTools
@@ -253,8 +254,9 @@ a = (TurnLeft, Forward)
 
 support(ice.model.implementation.sp)
 
-ice = Iceworld(p_slip=0.5, nrows = 5, ncols = 5, holes = (2,2) ,target = (1,1))
-
+prob = DecisionDomains.Iceworld(p_slip=0.5, nrows = 5, ncols = 5, holes = (2,2) ,target = (1,1))
+# sample an action
+rand([Decisions.support(prob[:a])...])
 
 function jointTransition(s,a,g,params)
         tp = params.transition_prob  # Transition probability
