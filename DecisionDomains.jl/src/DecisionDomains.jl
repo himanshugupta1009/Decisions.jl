@@ -1,5 +1,17 @@
 module DecisionDomains
 
-greet() = print("Hello World!")
+    import RockSample
+    import POMDPs
+    import POMDPTools
+    import Distributions
+    using DecisionNetworks
+    using DecisionProblems
+
+    include("gridworld.jl")
+    include("rocksample.jl")
+
+    export Iceworld,
+    GridPointSpace,
+    RockSampleDecisionsPOMDP
 
 end # module DecisionDomains

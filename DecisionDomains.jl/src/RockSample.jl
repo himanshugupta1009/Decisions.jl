@@ -1,11 +1,4 @@
-import RockSample
-import POMDPs
-import POMDPTools
-import Distributions
-using DecisionNetworks
-using DecisionProblems
-
-function RockSampleDecisions()
+function RockSampleDecisionsPOMDP()
     pomdp = RockSample.RockSamplePOMDP()
     up = POMDPTools.DiscreteUpdater(pomdp)
     m0 = POMDPs.initialize_belief(up,POMDPs.initialstate(pomdp))
