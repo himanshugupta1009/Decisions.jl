@@ -14,4 +14,4 @@ module DecisionDomains
     GridPointSpace,
     RockSampleDecisionsPOMDP
 
-end # module DecisionDomains
+end 

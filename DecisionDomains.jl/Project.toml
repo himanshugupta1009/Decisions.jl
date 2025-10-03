@@ -16,3 +16,7 @@ Distributions = "0.25.122"
 POMDPTools = "1.1.0"
 POMDPs = "1.0.0"
 RockSample = "0.2.1"
+
+[sources]
+DecisionNetworks = {path = "../DecisionNetworks.jl"}
+DecisionProblems = {path = "../DecisionProblems.jl"}
