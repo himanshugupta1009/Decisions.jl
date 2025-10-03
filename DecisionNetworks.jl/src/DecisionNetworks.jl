@@ -74,6 +74,7 @@ export Dense
 
 export name
 export indices
+export with_hints
 
 include("spaces.jl")
 export Space
@@ -129,6 +130,7 @@ export Recondition
 export IndexExplode
 export MergeForward
 export Rename
+export SetNodeHints
 
 include("show.jl")
 include("std_family.jl")
