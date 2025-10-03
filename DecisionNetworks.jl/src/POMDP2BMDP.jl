@@ -3,7 +3,7 @@ using Pkg
 Pkg.activate()
 using Decisions
 using Random
-using DecisionDomains
+# using DecisionDomains
 
 Pkg.activate(".")
 using POMDPs
@@ -120,17 +120,22 @@ dnplot(myBMDP.model)
 
 # TODO
 # Step 5: Rename m--> s, and mp --> sp
+myBMDP = myBMDP |> Rename(; m = :s, mp = :sp)
+myBMDP = myBMDP |> SetNodeHints(:sp; is_terminable=true)
+dnplot(myBMDP.model)
 
-# After doing this,  Decisions.support(myBMDP[:a]) errors !!!
-
-# myBMDP = myBMDP |> Rename(; m = :s, mp = :sp)
-# dnplot(myBMDP.model)
+# Check that it is now an MDP:
+myBMDP isa Decisions.MDP
 
 # Step 6: Reimplement reward
+# calc_reward = @ConditionalDist Float64 begin
+#     function rand(rng; m)
+# end
 myBMDP = myBMDP |> Implement(; r = myPOMDP[:r])
 
 m = myBMDP.initial.rand()
 a = rand(Decisions.support(myBMDP[:a]))
+a = rand(Decisions.support(myPOMDP[:a]))
 mp =rand(myBMDP[:mp]; m,a)
 
 m = mp
