@@ -3,6 +3,7 @@ using Pkg
 Pkg.activate()
 using Decisions
 using Random
+using DecisionDomains
 
 Pkg.activate(".")
 using POMDPs
@@ -17,13 +18,14 @@ myPOMDP = POMDP_DN(
         )
 dnplot(myPOMDP)
 
-
+myPOMDP = RockSampleDecisions()
+dnplot(myPOMDP.model)
 # Step 1: 
 myBMDP = myPOMDP |> Unimplement(:r, :o,:mp)
 
 # Step 2: 
 myBMDP = myBMDP |> MergeForward(:s, :sp, :o)
-dnplot(myBMDP)
+dnplot(myBMDP.model)
 
 
 # Step 3: define an updater from memory node m to memory node mp:
@@ -67,3 +69,72 @@ dnplot(myBMDP)
 # Step 5: Rename m--> s, and mp --> sp
 myBMDP = myBMDP |> Rename(; m = :s, mp = :sp)
 dnplot(myBMDP)
+
+
+
+
+# RockSample Example:
+
+myPOMDP = RockSampleDecisions()
+dnplot(myPOMDP.model)
+# Step 1: 
+myBMDP = myPOMDP |> Unimplement(:r, :o,:mp)
+
+# Step 2: 
+myBMDP = myBMDP |> MergeForward(:s, :sp, :o)
+dnplot(myBMDP.model)
+
+
+# Step 3: define an updater from memory node m to memory node mp:
+function genObs(rng; m, a)
+    # Set s in the environment model to a sample from m, and :a to a.
+    s = rand(rng, m)
+    println(s)
+
+    sp = rand(myPOMDP[:sp]; s, a)
+    o = rand(myPOMDP[:o]; s, a, sp)
+    
+    return o
+end
+
+# function update( m, a, o)
+#     # Set s in the environment model to a sample from m, and :a to a.
+#     return m
+# end
+
+mem_updater = @ConditionalDist Any begin
+    function rand(rng; m, a)
+        o = genObs(rng; m,a)
+        println(o)
+        rand(myPOMDP[:mp]; m, a, o)
+    end
+end
+
+myBMDP = myBMDP |> Implement(;
+    mp = mem_updater 
+)
+
+# Step 4: recondition r on m, a, mp
+myBMDP = myBMDP |> Recondition(; r =(Dense(:a),Dense(:m),Dense(:mp)))
+dnplot(myBMDP.model)
+
+# TODO
+# Step 5: Rename m--> s, and mp --> sp
+
+# After doing this,  Decisions.support(myBMDP[:a]) errors !!!
+
+# myBMDP = myBMDP |> Rename(; m = :s, mp = :sp)
+# dnplot(myBMDP.model)
+
+# Step 6: Reimplement reward
+myBMDP = myBMDP |> Implement(; r = myPOMDP[:r])
+
+m = myBMDP.initial.rand()
+a = rand(Decisions.support(myBMDP[:a]))
+mp =rand(myBMDP[:mp]; m,a)
+
+m = mp
+a = rand(Decisions.support(myBMDP[:a]))
+mp =rand(myBMDP[:mp]; m,a)
+
+# sample or simulate
