@@ -1,5 +1,4 @@
-function RockSampleDecisionsPOMDP()
-    pomdp = RockSample.RockSamplePOMDP()
+function RockSampleDecisionsPOMDP(;pomdp = RockSample.RockSamplePOMDP())
     up = POMDPTools.DiscreteUpdater(pomdp)
     m0 = POMDPs.initialize_belief(up,POMDPs.initialstate(pomdp))
     rstransition = @ConditionalDist RockSample.RSState begin
