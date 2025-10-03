@@ -118,8 +118,27 @@ myBMDP = myBMDP |> Implement(;
 myBMDP = myBMDP |> Recondition(; r =(Dense(:a),Dense(:m),Dense(:mp)))
 dnplot(myBMDP.model)
 
-# TODO
-# Step 5: Rename m--> s, and mp --> sp
+# Step 5: Reimplement reward
+calc_reward = @ConditionalDist Float64 begin
+    function rand(rng; m, a, mp)
+        Ns = 50
+        r = 0.0
+        for i in range(1,Ns)    
+            s_i = rand(rng, m)
+            sp_i = rand(rng, mp)
+            r += rand(myPOMDP[:r]; s = s_i, a, sp = sp_i)
+            println(r)
+        end
+        return r /=Ns
+    end
+end
+
+myBMDP = myBMDP |> Implement(;
+    r = calc_reward 
+)
+
+
+# Step 6: Rename m--> s, and mp --> sp
 myBMDP = myBMDP |> Rename(; m = :s, mp = :sp)
 myBMDP = myBMDP |> SetNodeHints(:sp; is_terminable=true)
 dnplot(myBMDP.model)
@@ -127,19 +146,12 @@ dnplot(myBMDP.model)
 # Check that it is now an MDP:
 myBMDP isa Decisions.MDP
 
-# Step 6: Reimplement reward
-# calc_reward = @ConditionalDist Float64 begin
-#     function rand(rng; m)
-# end
-myBMDP = myBMDP |> Implement(; r = myPOMDP[:r])
 
-m = myBMDP.initial.rand()
+
+s = myBMDP.initial.rand()
 a = rand(Decisions.support(myBMDP[:a]))
 a = rand(Decisions.support(myPOMDP[:a]))
-mp =rand(myBMDP[:mp]; m,a)
-
-m = mp
-a = rand(Decisions.support(myBMDP[:a]))
-mp =rand(myBMDP[:mp]; m,a)
+sp =rand(myBMDP[:sp]; s,a)
+r = rand(myBMDP[:r]; s, a, sp)
 
 # sample or simulate
