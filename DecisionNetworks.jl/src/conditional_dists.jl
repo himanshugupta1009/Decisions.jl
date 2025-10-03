@@ -461,8 +461,6 @@ end
 # TODO: This is really slow! Should be @generated
 function _rvs_for(::RenamedDist{K_new, T, K_old, D, N}, rvs) where {K_new, T, K_old, D, N}
     reverse_map = (values(N) .=> keys(N)) |> NamedTuple
-    println(values(reverse_map[keys(rvs)]))
-    println([rvs...])
     values(reverse_map[keys(rvs)]) .=> values(values((rvs))) # ugh
 end
 
