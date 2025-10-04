@@ -340,6 +340,14 @@ end
     (PartiallyObservable, Any)        => Joint(:o    ; is_terminable=false)
     (FullyObservable,     Any)        => nothing
 end
+
+# @markov_node :o Observability Multiagency Centralization begin
+#     (PartiallyObservable, MultiAgent) => Joint(:o, :i; is_terminable=false)
+#     (PartiallyObservable, Any)        => Joint(:o    ; is_terminable=false)
+#     (FullyObservable,     Any)        => nothing
+#     (PartiallyObservable, MultiAgent, Decentralized) => Indep(:o, :i; is_terminable=false)
+# end
+
 @markov_edge (:sp => :o) Statefulness begin 
     Stateful      => Dense(:sp)
     AgentFactored => Parallel(:sp, :i)
