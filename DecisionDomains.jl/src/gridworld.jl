@@ -99,7 +99,7 @@ function Iceworld(; p_slip=0.1, nrows=5, ncols=5, holes=[], target=(5,5))
         end
     end
 
-    MDP(DiscountedReward(0.99), initial_state;
+    DecisionProblems.MDP(DiscountedReward(0.99), initial_state;
         sp=transition,
         r=reward,
         a=FiniteSpace([NORTH, SOUTH, EAST, WEST])

@@ -34,11 +34,12 @@ Insert one or more nodes into a decision graph or decision network.
 """
 struct Insert <: DNTransformation 
     nodes
-    Insert(nodes...) = new(node_def.(nodes) |> Tuple)
+    # Insert(nodes...) = new(node_def.(nodes) |> Tuple)
+    Insert(nodes...) = new(Tuple.(nodes)) #Q: Should this be a NamedTuple?
 end
 
 function transform(trans::Insert, g::DecisionGraph)
-    new_nodes = merge(nodes(g), NamedTuple([name(node[2]) => n for n in trans.nodes]))
+    new_nodes = merge(nodes(g), NamedTuple([name(n[2]) => n for n in trans.nodes]))
     DecisionGraph(new_nodes, dynamic_pairs(g), ranges(g))
 end
 
