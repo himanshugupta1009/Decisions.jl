@@ -48,7 +48,7 @@ function RockSampleDecisionsPOMDP(;pomdp = RockSample.RockSamplePOMDP())
         end
     end
 
-    rsmemory = @ConditionalDist POMDPTools.BeliefUpdaters.DiscreteBelief{RockSample.RockSamplePOMDP{3}, RockSample.RSState{3}} begin
+    rsmemory = @ConditionalDist typeof(m0) begin
         function support(;a,m,o)
             POMDPs.update(up,m,a,o)
         end
@@ -67,20 +67,10 @@ function RockSampleDecisionsPOMDP(;pomdp = RockSample.RockSamplePOMDP())
         end
     end
     
-    rsinitialbel = @ConditionalDist Tuple{RockSample.RSState,Int} begin
-        function support(;)
-            m0
-        end
-        function pdf(m;)
-            if m == m0
-                1.0
-            else
-                0.0
-            end
-        end
-        function rand(;)
-            m0
-        end
+    # rsinitialbel = @ConditionalDist Tuple{RockSample.RSState,Int} begin
+    rsinitialbel = @ConditionalDist @NamedTuple{s::RockSample.RSState,m::typeof(m0)} begin
+        support(;) = [ (;s = s, m = m0) for s in POMDPTools.ordered_states(pomdp) ]
+        rand(rng;) = (;s = rand(rng,m0), m = m0)
     end
 
     rsa = @ConditionalDist Int64 begin
@@ -92,7 +82,7 @@ function RockSampleDecisionsPOMDP(;pomdp = RockSample.RockSamplePOMDP())
         end
     end
 
-    return Decisions.POMDP(DiscountedReward(POMDPs.discount(pomdp)),rsinitialbel;
+    return DecisionProblems.POMDP(DiscountedReward(POMDPs.discount(pomdp)),rsinitialbel;
     sp = rstransition,
     r = rsreward,
     o = rsobservation,
@@ -100,3 +90,56 @@ function RockSampleDecisionsPOMDP(;pomdp = RockSample.RockSamplePOMDP())
     a = rsa
     )
 end
+
+
+struct RandomSolver <: DecisionAlgorithm end
+
+function DecisionProblems.solve(::RandomSolver, dp::DecisionProblem)
+    # sample uniformly from the declared action space of the problem
+    pol = @ConditionalDist Int begin
+        rand(rng; m) = rand(rng, DecisionNetworks.support(dp[:a];m=m))   
+    end
+    (; a = pol)   # MUST be a NamedTuple keyed by action node names
+end
+
+function episode_rocksample_decisions(; steps=10, rng = MersenneTwister(0), 
+                                pomdp = RockSample.RockSamplePOMDP())
+
+    rs_prob = RockSampleDecisionsPOMDP(; pomdp)
+    rs_random_solver = RandomSolver()
+    
+    traj = NamedTuple[]
+    G = 0.0
+    γ = POMDPs.discount(pomdp)
+    t = 0
+    println("Starting Episode...")
+    simulate!(rs_random_solver, rs_prob) do vals
+        t += 1
+        println("Step $t: a=$(vals[:a]), r=$(vals[:r]), o=$(vals[:o])")
+        push!(traj, (; t, a = vals[:a], r = vals[:r], o = vals[:o]))
+        G += (γ^(t-1)) * vals[:r]
+        t >= steps
+    end
+    return (; traj, G)
+end
+#=
+
+]
+
+activate DecisionDomains.jl
+
+using DecisionNetworks
+using DecisionProblems
+using POMDPTools
+using POMDPs
+using RockSample
+
+
+include("DecisionDomains.jl/src/rocksample.jl")
+rs_prob = RockSampleDecisionsPOMDP()
+rs_solver = RandomSolver()
+
+episode_rocksample_decisions(steps=10);
+
+
+=#
