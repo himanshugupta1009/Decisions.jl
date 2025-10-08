@@ -96,9 +96,38 @@ function Iceworld(; p_slip=0.1, nrows=5, ncols=5, holes=[], target=(5,5))
         end
     end
 
-    MDP(DiscountedReward(0.99), initial_state;
+    DecisionProblems.MDP(DiscountedReward(0.99), initial_state;
         sp=transition,
         r=reward,
         a=FiniteSpace([NORTH, SOUTH, EAST, WEST])
     )
 end
+
+
+policy = @ConditionalDist Cardinal begin
+    rand(rng; s) = rand(rng, support(prob[:a]))   # uniform random
+end
+
+struct RandomSolver <: DecisionAlgorithm
+end
+
+function DecisionProblems.solve(alg::RandomSolver, prob::DecisionProblem)
+    action_type = eltype(prob[:a])
+    pol = @ConditionalDist action_type begin
+        function rand(rng; s)
+            rand([DecisionNetworks.support(prob[:a])...])
+        end
+    end
+    (; a = pol)
+end
+
+function run_episode(;max_steps=10)
+    prob = Iceworld()
+    steps = 0
+    simulate!(RandomSolver(), prob) do vals
+        println(vals)
+        steps +=1
+        steps >= max_steps
+    end
+end
+# run_episode()
