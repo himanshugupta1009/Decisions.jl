@@ -335,10 +335,10 @@ end
 
 
 # OBSERVATION NODE
-@markov_node :o Observability Multiagency begin
-    (PartiallyObservable, MultiAgent) => Joint(:o, :i; is_terminable=false)
-    (PartiallyObservable, Any)        => Joint(:o    ; is_terminable=false)
-    (FullyObservable,     Any)        => nothing
+@markov_node :o Observability Centralization begin
+    (PartiallyObservable, Decentralized) => Joint(:o, :i; is_terminable=false)
+    (PartiallyObservable, Any)           => Joint(:o    ; is_terminable=false)
+    (FullyObservable,     Any)           => nothing
 end
 
 # @markov_node :o Observability Multiagency Centralization begin

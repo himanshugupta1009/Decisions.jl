@@ -45,6 +45,152 @@ end
 transform(trans::Insert, dn::DecisionNetwork) = _default_transform(trans, dn)
 
 """
+    InsertDynamic <: DNTransformation
+    InsertDynamic(nodes...)
+
+Insert one or more dynamic linkings into a decision network
+
+Each element in `nodes` should be a `a::Symbol => b::Symbol` pair, where `a` is an input 
+node (with no implementation` and `b` is different node.
+"""
+struct InsertDynamic{N<:NamedTuple} <: DNTransformation 
+    pairs::N
+    function InsertDynamic(nodes...) 
+        t = nodes |> NamedTuple
+        new{typeof(t)}(t)
+    end
+end
+
+function transform(trans::InsertDynamic, g::DecisionGraph)
+    new_pairs = merge(dynamic_pairs(g), trans.pairs)
+    DecisionGraph(nodes(g), new_pairs, ranges(g))
+end
+
+transform(trans::InsertDynamic, dn::DecisionNetwork) = _default_transform(trans, dn)
+
+
+"""
+    AddAxis <: DNTransformation
+
+Add an axis (that is, an indexing variable) to a node.
+
+If transforming a decision network where the node has an implementation, assumes the node is
+identically distributed over the axis (and forms a CompoundDist).
+"""
+struct AddAxis <: DNTransformation
+    nodes::Tuple{Vararg{Symbol}}
+    axis::Symbol
+    range::NamedTuple
+
+    function AddAxis(nodes, axis, n=-1)
+        range = (n==-1) ? (;) : NamedTuple{(axis,)}(n)
+        new(nodes |> Tuple, axis, range)
+    end
+    function AddAxis(node::Symbol, axis, n=-1)
+        range = (n==-1) ? (;) : NamedTuple{(axis,)}(n)
+        new((node,), axis, range)
+    end
+end
+
+function transform(trans::AddAxis, dn::DecisionGraph)
+    new_nodes = map(values(nodes(dn))) do node_def
+        if name(node_def[2]) ∈ trans.nodes
+            new_node_output = with_idxs(node_def[2], (indices(node_def[2])..., trans.axis))
+            node_def[1] => new_node_output
+        else
+            node_def
+        end
+    end
+    new_ranges = if isnothing(ranges(dn))
+        trans.range
+    else
+        merge(ranges(dn), trans.range)
+    end
+    DecisionGraph(new_nodes, dynamic_pairs(dn), new_ranges)
+end
+
+function transform(trans::AddAxis, dn::DecisionNetwork)
+    dg = transform(trans, graph(dn))
+
+    @assert trans.axis ∈ keys(trans.range)
+    n = trans.range[trans.axis]
+
+    new_impl = map(keys(implementation(dn))) do rv
+        dist = implementation(dn)[rv]
+        if rv ∈ trans.nodes
+            rv => CompoundDist([dist for _ in 1:n]...; idx=trans.axis)
+        else
+            rv => dist
+        end
+    end |> NamedTuple
+
+    dg(; new_impl...)
+end
+
+"""
+    WithJoint <: DecisionNetwork
+    WithJoint(nodes...)
+
+Transformation which modifies nodes `nodes` in a network to be jointly sampled over all
+axes. 
+"""
+struct WithJoint <: DNTransformation
+    nodes::Tuple{Vararg{Symbol}}
+
+    function WithJoint(nodes)
+        new(nodes)
+    end
+    function WithJoint(node::Symbol)
+        new((node,))
+    end
+end
+function transform(trans::WithJoint, dn::DecisionGraph)
+    new_nodes = map(values(nodes(dn))) do node_def
+        if name(node_def[2]) ∈ trans.nodes
+            k = node_def[2]
+            new_node_output = Joint(name(k), indices(k)...; hints(k)...)
+            node_def[1] => new_node_output
+        else
+            node_def
+        end
+    end
+    DecisionGraph(new_nodes, dynamic_pairs(dn), ranges(dn))
+end
+transform(trans::WithJoint, dn::DecisionNetwork) = _default_transform(trans, dn)
+
+
+"""
+    WithIndep <: DecisionNetwork
+    WithIndep(nodes...)
+
+Transformation which modifies nodes `nodes` in a network to be independently sampled over
+all axes. 
+"""
+struct WithIndep <: DNTransformation
+    nodes::Tuple{Vararg{Symbol}}
+
+    function WithIndep(nodes)
+        new(nodes)
+    end
+    function WithIndep(node::Symbol)
+        new((node,))
+    end
+end
+function transform(trans::WithIndep, dn::DecisionGraph)
+    new_nodes = map(values(nodes(dn))) do node_def
+        if name(node_def[2]) ∈ trans.nodes
+            k = node_def[2]
+            new_node_output = Indep(name(k), indices(k)...; hints(k)...)
+            node_def[1] => new_node_output
+        else
+            node_def
+        end
+    end
+    DecisionGraph(new_nodes, dynamic_pairs(dn), ranges(dn))
+end
+transform(trans::WithIndep, dn::DecisionNetwork) = _default_transform(trans, dn)
+
+"""
     Implement <: DNTransformation
     Implement(; impls::ConditionalDist...)
 
@@ -175,7 +321,7 @@ function _get_split_input(n::Parallel, corr_output, i)
     elseif length(corr_output) == 1
         [n]
     else
-        new_indices = filter(i -> i != idx, indices(n))
+        new_indices = filter(j -> j != i, indices(n))
         if isempty(new_indices)
             [Dense(name(corr_output[i]))]
         else

@@ -131,6 +131,10 @@ export IndexExplode
 export MergeForward
 export Rename
 export SetNodeHints
+export WithIndep
+export WithJoint
+export AddAxis
+export InsertDynamic
 
 include("show.jl")
 include("std_family.jl")
@@ -140,6 +144,7 @@ export MDP_DN
 export POMDP_DN
 export MG_DN
 export DecPOMDP_DN
+export POMG_DN
 
 include("visualization.jl")
 export dnplot

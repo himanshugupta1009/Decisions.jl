@@ -87,6 +87,7 @@ struct Indep{id, idxs, hints} <: Plate{id, idxs, hints}
 end
 
 with_hints(::Indep{id, idxs, hints}; new_hints...) where {id, idxs, hints} = Indep(id, idxs; new_hints...)
+with_idxs(::Indep{id, idxs, hints}, new_idxs) where {id, idxs, hints} = Indep(id, new_idxs; hints...)
 
 
 """
@@ -101,6 +102,7 @@ struct Joint{id, idxs, hints} <: Plate{id, idxs, hints}
 end
 
 with_hints(::Joint{id, idxs, hints}; new_hints...) where {id, idxs, hints} = Joint(id, idxs; new_hints...)
+with_idxs(::Joint{id, idxs, hints}, new_idxs) where {id, idxs, hints} = Joint(id, new_idxs; hints...)
 
 
 """
@@ -116,6 +118,7 @@ function JointAndIndep(ids, joint_idxs, indep_idxs, hints=false)
 end
 
 with_hints(::JointAndIndep{id, idxs, n, hints}; new_hints...) where {id, idxs, n, hints} = JointAndIndep{id, idxs, n, NamedTuple(new_hints)}()
+# with_idxs(::JointAndIndep{id, idxs, n, hints}, new_idxs) where {id, idxs, n, hints} = JointAndIndep(id, new_idxs, n; hints...)
 
 """
     abstract type Condition <: RVGroup

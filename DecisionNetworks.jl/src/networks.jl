@@ -242,7 +242,19 @@ function sample(
     output::Union{Tuple{Vararg{Symbol}}, Symbol, Nothing}=nothing)
 
     dnout = isnothing(output) ? Val(node_names(dn)) : Val(output)
-    sample(fn, dn, decisions, input, dnout)
+    sample(fn, dn, decisions, input, dnout, Val(false))
+end
+
+function sample_expr(
+    dn::DecisionNetwork, 
+    decisions::NamedTuple=(;), 
+    input::NamedTuple=(;), 
+    output::Union{Tuple{Vararg{Symbol}}, Symbol, Nothing}=nothing)
+
+    dnout = isnothing(output) ? Val(node_names(dn)) : Val(output)
+    sample(dn, decisions, input, dnout, Val(true)) do _
+        false
+    end
 end
 
 @generated function sample(
@@ -250,7 +262,8 @@ end
     dn::DecisionNetwork, 
     decisions::NamedTuple, 
     input::NamedTuple{rvs_in}, 
-    _::Val{rvs_out}) where {rvs_out, rvs_in}
+    _::Val{rvs_out},
+    _::Val{as_expr}) where {rvs_out, rvs_in, as_expr}
 
     nodes_in_order = _crawl_dn(dn, rvs_in, rvs_out)
     
@@ -307,13 +320,16 @@ end
         fn(output) && return output
     end)
 
-    quote
-        quote
-            $zeroeth_pass_block
-            $first_pass_block
-            while true
-                $second_pass_block
-            end
+    q = quote
+        $zeroeth_pass_block
+        $first_pass_block
+        while true
+            $second_pass_block
         end
+    end
+    if as_expr
+        Meta.quot(q)
+    else
+        q
     end
 end
