@@ -333,13 +333,14 @@ struct CompoundDist{K_new, T, K_old} <: ConditionalDist{K_new, T}
                 end
             end
         end
-        K = (K_old..., idx) |> Tuple
+        K = (K_old..., idx) |> _sorted_tuple
         new{K, T, K_old}(dists |> Tuple, idx)
     end
 end
 
-@generated function _rvs_for(::CompoundDist{K, T, K_new}, rvs) where {K, T, K_new}
-    :(rvs[$(K_new)])
+function _rvs_for(::CompoundDist{K, T, K_new}, rvs) where {K, T, K_new}
+    k = [s for s in K_new if s ∈ keys(rvs)]
+    rvs[k]
 end
 
 function _get_dist(cd::CompoundDist; kwargs...)
@@ -347,34 +348,34 @@ function _get_dist(cd::CompoundDist; kwargs...)
 end
 
 function rand!(rng::AbstractRNG, cd::CompoundDist{K, T}, dest::T; kwargs...) where {K, T}
-    rand!(rng, _get_dist(cd; kwargs...), dest; rvs_for(cd, kwargs)...)
+    rand!(rng, _get_dist(cd; kwargs...), dest; _rvs_for(cd, kwargs)...)
 end
 function rand!(cd::CompoundDist{K, T}, dest::T; kwargs...) where {K, T}
-    rand!(_get_dist(cd; kwargs...), dest; rvs_for(cd, kwargs)...)
+    rand!(_get_dist(cd; kwargs...), dest; _rvs_for(cd, kwargs)...)
 end
 
 function support(cd::CompoundDist{K, T}; kwargs...) where {K, T}
-    support(_get_dist(cd; kwargs...); rvs_for(cd, kwargs)...)
+    support(_get_dist(cd; kwargs...); _rvs_for(cd, kwargs)...)
 end
 
 function Random.rand(rng::AbstractRNG, cd::CompoundDist; kwargs...)
-    rand(rng, _get_dist(cd; kwargs...); rvs_for(cd, kwargs)...)
+    rand(rng, _get_dist(cd; kwargs...); _rvs_for(cd, kwargs)...)
 end
 
 function Random.rand(cd::CompoundDist; kwargs...)
-    rand(_get_dist(cd; kwargs...); rvs_for(cd, kwargs)...)
+    rand(_get_dist(cd; kwargs...); _rvs_for(cd, kwargs)...)
 end
 
 function fix(cd::CompoundDist; kwargs...)
-    fix(_get_dist(cd; kwargs...); rvs_for(cd, kwargs)...)
+    fix(_get_dist(cd; kwargs...); _rvs_for(cd, kwargs)...)
 end
 
 function pdf(cd::CompoundDist, x; kwargs...)
-    pdf(_get_dist(cd; kwargs...), x; rvs_for(cd, kwargs)...)
+    pdf(_get_dist(cd; kwargs...), x; _rvs_for(cd, kwargs)...)
 end
 
 function logpdf(cd::CompoundDist, x; kwargs...)
-    logpdf(_get_dist(cd; kwargs...), x; rvs_for(cd, kwargs)...)
+    logpdf(_get_dist(cd; kwargs...), x; _rvs_for(cd, kwargs)...)
 end
 
 """
