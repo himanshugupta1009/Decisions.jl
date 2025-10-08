@@ -61,8 +61,6 @@ function _crawl_dn(dn, ids_in, ids_out)
     # inputs and the outputs.
     dynamic_inputs = Symbol[k for k in keys(dynamic_pairs(dn)) if k ∈ ids_in]
 
-    println(dynamic_inputs)
-
     input = [Set([ids_in...; keys(ranges(dn))...])...]  
     output = [Set([ids_out...; dynamic_pairs(dn)[dynamic_inputs]...])...]
 
@@ -135,6 +133,9 @@ end
 Generate an `Expr` that updates random variable `id` based on decision network `dn`.
 """
 function _make_node_assignment(dn, id; in_place=false)
+    if id ∉ keys(nodes(dn))
+        throw(ArgumentError("No implementation for DN node $id"))
+    end
     inputs_def = nodes(dn)[id][1]
     output_def = nodes(dn)[id][2]
 
@@ -165,11 +166,18 @@ function _make_node_assignment(dn, id; in_place=false)
             $(expr(output_def)) = $call
         end
     else
-        tmp_id = gensym()
-        quote
-            $tmp_id = $call
-            isterminal($tmp_id) && return
-            $(expr(output_def)) = $tmp_id
+        if isempty(indices(nodes(dn)[id][2]))
+            quote
+                $(expr(output_def)) = $call
+                isterminal($(expr(output_def))) && return
+            end
+        else
+            tmp_id = gensym()
+            quote
+                $tmp_id = $call
+                isterminal($tmp_id) && return
+                $(expr(output_def)) = $tmp_id
+            end
         end
     end
 

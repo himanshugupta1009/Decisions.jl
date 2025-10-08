@@ -228,8 +228,8 @@ function sample(
     dn::DecisionNetwork, 
     decisions::NamedTuple=(;), 
     input::NamedTuple=(;), 
-    output::Union{Tuple{Vararg{Symbol}}, Symbol}=())
-    sample(dn, decisions, input, Val(output)) do _
+    output::Union{Tuple{Vararg{Symbol}}, Symbol, Nothing}=nothing)
+    sample(dn, decisions, input, output) do _
         false # just wait for terminal if fn is not provided
     end
 end
@@ -308,10 +308,12 @@ end
     end)
 
     quote
-        $zeroeth_pass_block
-        $first_pass_block
-        while true
-            $second_pass_block
+        quote
+            $zeroeth_pass_block
+            $first_pass_block
+            while true
+                $second_pass_block
+            end
         end
     end
 end

@@ -1,5 +1,8 @@
 module DecisionAlgorithms
 
-greet() = print("Hello World!")
+    using DecisionNetworks
+    using DecisionProblems
+
+    include("vi.jl")
 
 end # module DecisionAlgorithms

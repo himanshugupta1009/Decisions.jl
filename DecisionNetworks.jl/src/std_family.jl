@@ -411,11 +411,6 @@ end
     SemiMarkov    => Joint(:τ; is_terminable=false)
     FixedTimestep => nothing 
 end
-@markov_edge (:sp => :τ) Statefulness begin
-    Stateful      => Dense(:sp)
-    AgentFactored => Dense(:sp)
-    Stateless     => nothing
-end
 @markov_edge (:a => :τ) Multiagency begin
     MultiAgent  => Dense(:a)
     SingleAgent => Dense(:a)

@@ -2,8 +2,13 @@ struct ValueIteration <: DecisionAlgorithm
     max_iters
 end
 
-function solve!(alg::ValueIteration, prob::MDP)
-    γ = prob.metric.discount
+function DecisionProblems.solve(alg::ValueIteration, prob::MDP)
+    γ = if length(prob.objective.discount) == 1
+        prob.objective.discount[1]
+    else
+        prob.objective.discount
+    end
+
     r0 = zero(support(prob[:r]))
     rmin = typemin.(r0)
 
@@ -29,6 +34,7 @@ function solve!(alg::ValueIteration, prob::MDP)
             V[s], π[s] = Vs_best, a_best
         end
     end
+
     (; a = @ConditionalDist Any begin
             rand(rng; s) = π[s]
         end

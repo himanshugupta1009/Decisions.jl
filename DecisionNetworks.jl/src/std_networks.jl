@@ -19,10 +19,10 @@ macro ARwd()    :(RewardStyle => SingleReward(:a)) end
 macro SARwd()   :(RewardStyle => SingleReward(:s, :a, :sp)) end
 macro MARwd()   :(RewardStyle => SingleReward(:m, :a, :mp)) end
 
-macro NSRwds()  :(RewardStyle => (IndefiniteRewards(:s), IndefiniteRewards(:s, :sp))) end
+# macro NSRwds()  :(RewardStyle => (IndefiniteRewards(:s), IndefiniteRewards(:s, :sp))) end
 macro NARwds()  :(RewardStyle => IndefiniteRewards(:a)) end
-macro NSARwds() :(RewardStyle => (IndefiniteRewards(:s), IndefiniteRewards(:s, :a), IndefiniteRewards(:s, :a, :sp))) end
-macro NMARwds() :(RewardStyle => (IndefiniteRewards(:m), IndefiniteRewards(:m, :a), IndefiniteRewards(:m, :a, :mp))) end
+macro NSARwds() :(RewardStyle => IndefiniteRewards(:s, :a, :sp)) end
+# macro NMARwds() :(RewardStyle => (IndefiniteRewards(:m), IndefiniteRewards(:m, :a), IndefiniteRewards(:m, :a, :mp))) end
 
 macro HasS()    :(Statefulness => Stateful()) end
 
@@ -145,7 +145,7 @@ process.
 # @markov_alias CDecPOMDP_DN    _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @NSARwds)
 # @markov_alias CDecPOSMDP_DN   _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @NSARwds, @Semi)
 # @markov_alias CPOMG_DN        _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @Comp, @NSARwds)
-# @markov_alias CPOSMG_DN       _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @Comp, @NSARwds, @Semi)
+@markov_alias CPOSMG_DN       _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @Comp, @NSARwds, @Semi)
 # @markov_alias CIndPOMDP_DN    _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @Indv, @NSARwds)
 # @markov_alias CIndPOSMDP_DN   _Traits(@HasS, @NAgents, @UnCorr, @PObs, @YesMem, @DeCentr, @Indv, @NSARwds, @Semi)
 
