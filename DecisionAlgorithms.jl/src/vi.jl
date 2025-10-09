@@ -22,8 +22,10 @@ function DecisionProblems.solve(alg::ValueIteration, prob::MDP)
             for a in support(prob[:a]; s)
                 Vs = r0
                 for sp in support(prob[:sp]; a, s)
-                    Vs += prob[:r](; s, a, sp) # Assuming reward is deterministic; see #24
+                    r = prob[:r](; s, a, sp) # Assuming reward is deterministic; see #24
+                    Vs += r
                     if ! isterminal(sp)
+                        p = prob[:sp](sp ; s, a)
                         Vs += γ * prob[:sp](sp ; s, a) * V[sp]
                     end
                 end
