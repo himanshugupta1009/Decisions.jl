@@ -9,6 +9,7 @@ module DecisionDomains
 
     include("gridworld.jl")
     include("rocksample.jl")
+    include("tag.jl")
 
     export Iceworld,
     GridPointSpace,

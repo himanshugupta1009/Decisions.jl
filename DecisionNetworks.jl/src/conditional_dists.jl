@@ -519,12 +519,15 @@ struct MergedDist{K, T, rv, Ka, Ta, Kb} <: ConditionalDist{K, T}
 end
 
 
-@generated function _rvs_for_a(::MergedDist{K, T, rv, Ka, Ta, Kb}, rvs) where {K, T, rv, Ka, Ta, Kb}
-    :(rvs[$(Ka)])
+function _rvs_for_a(::MergedDist{K, T, rv, Ka, Ta, Kb}, rvs) where {K, T, rv, Ka, Ta, Kb}
+    k = Symbol[i for i ∈ Ka if i ∈ keys(rvs)]
+    rvs[k]
 end
-@generated function _rvs_for_b(cd::MergedDist{K, T, rv, Ka, Ta, Kb}, rvs) where {K, T, rv, Ka, Ta, Kb}
+function _rvs_for_b(cd::MergedDist{K, T, rv, Ka, Ta, Kb}, rvs) where {K, T, rv, Ka, Ta, Kb}
+    # TODO
     Kb_only = [r for r in Kb if r != rv]
-    :(rvs[$(Kb_only)])
+    k = Symbol[i for i ∈ Kb_only if i ∈ keys(rvs)]
+    rvs[k]
 end
 
 function rand!(rng::AbstractRNG, cd::MergedDist{K, T, rv}, dest::T; kwargs...) where {K, T, rv}
@@ -552,6 +555,17 @@ function Random.rand(cd::MergedDist{K, T, rv}; kwargs...) where {K, T, rv}
     rand(cd.dist_b; _rvs_for_b(cd, kwargs)..., rv => x)
 end
 
+function pdf(cd::MergedDist{K, T, rv}, x; kwargs...) where {K, T, rv}
+    # TODO, only works in discrete case
+    akw = _rvs_for_a(cd, kwargs)
+    bkw = _rvs_for_b(cd, kwargs)
+    sum([support(cd.dist_a; akw...)...]) do a
+        pa = pdf(cd.dist_a, a; akw...)
+        pb = pdf(cd.dist_b, x; bkw..., rv => a)
+        pa * pb
+    end
+end
+
 
 """
     CollectDist <: ConditionalDist
@@ -569,7 +583,12 @@ end
 
 # TODO: Should be marked as deterministic
 
-# TODO: No support(), even though it's totally possible
+function support(cd::CollectDist{K, T}; kwargs...) where {K, T}
+    r = map(K) do k
+        kwargs[k]
+    end 
+    FiniteSpace([r])
+end
 
 function Random.rand(rng::AbstractRNG, cd::CollectDist{K, T}; kwargs...) where {K, T}
     map(K) do k
@@ -577,10 +596,16 @@ function Random.rand(rng::AbstractRNG, cd::CollectDist{K, T}; kwargs...) where {
     end 
 end
 
+function pdf(cd::CollectDist{K, T}, x; kwargs...) where {K, T}
+    # TODO: For continuous this is Dirac delta
+    #   Currently assuming discrete.
+    r = map(K) do k
+        kwargs[k]
+    end 
+    (x == r) ? 1.0 : 0.0
+end
 
-# Default `fix` is correct
 
-# PDF is Dirac delta which we don't have implemented yet
 
 
 """
